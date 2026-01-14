@@ -1,0 +1,1 @@
+# termometro-da-polarizacao
