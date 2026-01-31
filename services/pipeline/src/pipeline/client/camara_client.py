@@ -109,7 +109,7 @@ class CamaraClient:
 
         return self.fetch_data(votings_endpoint, params)
 
-    def get_rollcalls(self, voting_id: int, page: int = 1) -> dict:
+    def get_rollcalls(self, voting_id: int) -> dict:
         rollcalls_endpoint = get("camara_api", "rollcalls_endpoint").format(voting_id=voting_id)
 
         logger.info("Fetching rollcalls", extra={"voting_id": voting_id})

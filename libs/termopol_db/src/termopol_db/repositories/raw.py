@@ -166,7 +166,6 @@ class RawRollcallRepository(BaseRepository):
         query = RawQueries.upsert_rollcall(self.schema)
         params = (
             rollcall_data['voting_id'],
-            rollcall_data['voting_uri'],
             rollcall_data['voting_datetime'],
             rollcall_data['vote'],
             rollcall_data['deputy_id'],

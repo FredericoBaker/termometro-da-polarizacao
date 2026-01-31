@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS termopol.raw_votings (
 CREATE TABLE IF NOT EXISTS termopol.raw_rollcalls (
     id SERIAL PRIMARY KEY,
     voting_id TEXT NOT NULL,
-    voting_uri TEXT NOT NULL,
     voting_datetime TIMESTAMPTZ NOT NULL,
     vote TEXT NOT NULL,
     deputy_id INTEGER NOT NULL,

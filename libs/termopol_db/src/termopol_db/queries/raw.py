@@ -96,14 +96,13 @@ class RawQueries:
     def upsert_rollcall(schema: str) -> str:
         return f"""
             INSERT INTO {schema}.raw_rollcalls 
-            (voting_id, voting_uri, voting_datetime, vote, deputy_id, deputy_uri,
+            (voting_id, voting_datetime, vote, deputy_id, deputy_uri,
              deputy_name, deputy_party_code, deputy_party_uri, deputy_state_code,
              deputy_legislature_id, deputy_photo_url, payload)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (voting_id, deputy_id) DO UPDATE
-            SET vote = EXCLUDED.vote,
-                voting_uri = EXCLUDED.voting_uri,
-                voting_datetime = EXCLUDED.voting_datetime,
+            SET voting_datetime = EXCLUDED.voting_datetime,
+                vote = EXCLUDED.vote,
                 deputy_uri = EXCLUDED.deputy_uri,
                 deputy_name = EXCLUDED.deputy_name,
                 deputy_party_code = EXCLUDED.deputy_party_code,
