@@ -1,0 +1,114 @@
+from typing import Dict, Any
+
+
+class GraphQueries:    
+    # ===================== GRAPH =====================
+    
+    @staticmethod
+    def upsert_graph(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.graph 
+            (time_granularity_id, legislature, year, month)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (time_granularity_id, legislature, year, month) DO UPDATE
+            SET time_granularity_id = EXCLUDED.time_granularity_id
+            RETURNING *;
+        """
+    
+    @staticmethod
+    def get_graph_by_id(schema: str) -> str:
+        return f"SELECT * FROM {schema}.graph WHERE id = %s"
+    
+    @staticmethod
+    def get_graph_by_legislature(schema: str) -> str:
+        return f"SELECT * FROM {schema}.graph WHERE legislature = %s"
+    
+    @staticmethod
+    def get_graph_by_year(schema: str) -> str:
+        return f"SELECT * FROM {schema}.graph WHERE year = %s"
+    
+    @staticmethod
+    def get_graph_by_month(schema: str) -> str:
+        return f"SELECT * FROM {schema}.graph WHERE month = %s"
+    
+    @staticmethod
+    def get_all_graphs(schema: str) -> str:
+        return f"SELECT * FROM {schema}.graph ORDER BY legislature DESC, year DESC, month DESC"
+    
+    # ===================== EDGES =====================
+    
+    @staticmethod
+    def upsert_edge(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.edges 
+            (graph_id, deputy_a, deputy_b, w_signed, abs_w, alpha_deputy_a, alpha_deputy_b)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
+            SET w_signed = EXCLUDED.w_signed,
+                abs_w = EXCLUDED.abs_w,
+                alpha_deputy_a = EXCLUDED.alpha_deputy_a,
+                alpha_deputy_b = EXCLUDED.alpha_deputy_b,
+                updated_at = now()
+            RETURNING *;
+        """
+    
+    @staticmethod
+    def get_edge(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges 
+            WHERE graph_id = %s AND deputy_a = %s AND deputy_b = %s
+        """
+    
+    @staticmethod
+    def get_edges_by_graph(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges 
+            WHERE graph_id = %s
+            ORDER BY deputy_a, deputy_b
+        """
+    
+    @staticmethod
+    def get_edges_by_deputy(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges 
+            WHERE graph_id = %s AND (deputy_a = %s OR deputy_b = %s)
+            ORDER BY deputy_a, deputy_b
+        """
+    
+    @staticmethod
+    def delete_edges_by_graph(schema: str) -> str:
+        return f"DELETE FROM {schema}.edges WHERE graph_id = %s"
+    
+    # ===================== POLARIZATION METRICS =====================
+    
+    @staticmethod
+    def upsert_polarization_metric(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.polarization_metrics 
+            (graph_id, triads_total, three_positive_triads, two_positive_triads,
+             one_positive_triads, zero_positive_triads, polarization_index)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (graph_id) DO UPDATE
+            SET triads_total = EXCLUDED.triads_total,
+                three_positive_triads = EXCLUDED.three_positive_triads,
+                two_positive_triads = EXCLUDED.two_positive_triads,
+                one_positive_triads = EXCLUDED.one_positive_triads,
+                zero_positive_triads = EXCLUDED.zero_positive_triads,
+                polarization_index = EXCLUDED.polarization_index,
+                computed_at = now()
+            RETURNING *;
+        """
+    
+    @staticmethod
+    def get_polarization_metric(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.polarization_metrics 
+            WHERE graph_id = %s
+        """
+    
+    @staticmethod
+    def get_all_polarization_metrics(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.polarization_metrics 
+            ORDER BY computed_at DESC
+        """
