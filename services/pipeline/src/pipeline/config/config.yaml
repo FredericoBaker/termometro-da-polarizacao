@@ -1,0 +1,9 @@
+camara_api:
+  base_url: https://dadosabertos.camara.leg.br/api/v2/
+  parties_endpoint: partidos
+  deputies_endpoint: deputados
+  votings_endpoint: votacoes
+  rollcalls_endpoint: votacoes/{voting_id}/votos
+  timeout_seconds: 30
+  page_size: 100
+  retries: 3
