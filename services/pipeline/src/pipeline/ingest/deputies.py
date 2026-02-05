@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-from base import BaseIngestor
+from pipeline.ingest.base import BaseIngestor
 from termopol_db.repositories import RawDeputyRepository
 
 logger = logging.getLogger(__name__)

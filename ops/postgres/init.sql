@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_rollcalls (
     deputy_photo_url TEXT,
     payload JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (voting_id, deputy_id)
 );
 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS termopol.parties (
     external_id INTEGER NOT NULL UNIQUE,
     party_code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
-    uri TEXT NOT NULL
+    uri TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -96,7 +96,8 @@ CREATE TABLE IF NOT EXISTS termopol.deputies_legislature_terms (
     legislature_id INTEGER NOT NULL,
     party_id INTEGER NOT NULL REFERENCES termopol.parties(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (deputy_id, legislature_id)
 );
 
 CREATE TABLE IF NOT EXISTS termopol.votings (
@@ -113,11 +114,12 @@ CREATE TABLE IF NOT EXISTS termopol.rollcalls (
     id SERIAL PRIMARY KEY,
     voting_id INTEGER NOT NULL REFERENCES termopol.votings(id),
     voting_datetime TIMESTAMPTZ NOT NULL,
-    vote TEXT NOT NULL,
+    vote INTEGER NOT NULL, -- 0 = Não, 1 = Sim -> Other possibilities are ignored
     deputy_id INTEGER NOT NULL REFERENCES termopol.deputies(id),
     legislature_term_id INTEGER NOT NULL REFERENCES termopol.deputies_legislature_terms(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(voting_id, deputy_id)
 );
 
 CREATE TABLE IF NOT EXISTS termopol.graph_time_granularities (

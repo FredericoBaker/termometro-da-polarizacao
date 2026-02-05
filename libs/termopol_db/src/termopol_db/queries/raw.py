@@ -13,8 +13,7 @@ class RawQueries:
             SET party_code = EXCLUDED.party_code,
                 name = EXCLUDED.name,
                 uri = EXCLUDED.uri,
-                payload = EXCLUDED.payload,
-                ingested_at = now()
+                payload = EXCLUDED.payload
             RETURNING *;
         """
     
@@ -44,8 +43,7 @@ class RawQueries:
                 legislature_id = EXCLUDED.legislature_id,
                 photo_url = EXCLUDED.photo_url,
                 email = EXCLUDED.email,
-                payload = EXCLUDED.payload,
-                ingested_at = now()
+                payload = EXCLUDED.payload
             RETURNING *;
         """
     
@@ -77,8 +75,7 @@ class RawQueries:
                 proposition_subject_uri = EXCLUDED.proposition_subject_uri,
                 description = EXCLUDED.description,
                 approval = EXCLUDED.approval,
-                payload = EXCLUDED.payload,
-                ingested_at = now()
+                payload = EXCLUDED.payload
             RETURNING *;
         """
     
@@ -110,8 +107,7 @@ class RawQueries:
                 deputy_state_code = EXCLUDED.deputy_state_code,
                 deputy_legislature_id = EXCLUDED.deputy_legislature_id,
                 deputy_photo_url = EXCLUDED.deputy_photo_url,
-                payload = EXCLUDED.payload,
-                ingested_at = now()
+                payload = EXCLUDED.payload
             RETURNING *;
         """
     

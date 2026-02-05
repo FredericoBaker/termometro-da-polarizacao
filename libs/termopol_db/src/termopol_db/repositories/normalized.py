@@ -162,9 +162,7 @@ class NormalizedDeputyRepository(BaseRepository):
         self, 
         deputy_id: int, 
         party_id: int, 
-        legislature: int,
-        start_date: date,
-        end_date: Optional[date] = None
+        legislature: int
     ) -> Optional[Dict[str, Any]]:
         """
         Insert or update a deputy's legislature term.
@@ -173,14 +171,12 @@ class NormalizedDeputyRepository(BaseRepository):
             deputy_id: Reference to deputies table
             party_id: Reference to parties table
             legislature: Legislature number
-            start_date: Term start date
-            end_date: Term end date (optional)
             
         Returns:
             The inserted/updated term record
         """
         query = NormalizedQueries.upsert_deputy_legislature_term(self.schema)
-        params = (deputy_id, party_id, legislature, start_date, end_date)
+        params = (deputy_id, legislature, party_id)
         logger.debug(
             "Upserting deputy legislature term",
             extra={"deputy_id": deputy_id, "legislature": legislature}
@@ -207,9 +203,8 @@ class NormalizedVotingRepository(BaseRepository):
     def upsert_voting(
         self,
         external_id: int,
-        voting_date: date,
-        organ_code: str,
-        description: Optional[str] = None,
+        date: date,
+        registration_datetime: datetime,
         approval: Optional[bool] = None
     ) -> Optional[Dict[str, Any]]:
         """
@@ -217,19 +212,18 @@ class NormalizedVotingRepository(BaseRepository):
         
         Args:
             external_id: External voting ID from API
-            voting_date: Date of the voting
-            organ_code: Organ code (e.g., 'PLENARIO')
-            description: Voting description
+            date: Date of the voting
+            registration_datetime: Date and time when the voting was registered
             approval: Whether the voting was approved
             
         Returns:
             The inserted/updated voting record
         """
         query = NormalizedQueries.upsert_voting(self.schema)
-        params = (external_id, voting_date, organ_code, description, approval)
+        params = (external_id, date, registration_datetime, approval)
         logger.debug(
             "Upserting normalized voting",
-            extra={"external_id": external_id, "voting_date": voting_date}
+            extra={"external_id": external_id, "voting_date": registration_datetime}
         )
         return self._execute_query(query, params, fetch_one=True)
     
@@ -291,22 +285,26 @@ class NormalizedRollcallRepository(BaseRepository):
     def upsert_rollcall(
         self,
         voting_id: int,
+        voting_datetime: datetime,
+        vote: str,
         deputy_id: int,
-        vote: str
+        legislature_term_id: int
     ) -> Optional[Dict[str, Any]]:
         """
         Insert or update a rollcall in rollcalls table.
         
         Args:
             voting_id: Reference to votings table
+            voting_datetime: Date and time of the voting
+            vote: Vote value 
             deputy_id: Reference to deputies table
-            vote: Vote value ('Sim', 'Não', 'Abstenção', 'Obstrução')
-            
+            legislature_term_id: Reference to deputies_legislature_terms table
+
         Returns:
             The inserted/updated rollcall record
         """
         query = NormalizedQueries.upsert_rollcall(self.schema)
-        params = (voting_id, deputy_id, vote)
+        params = (voting_id, voting_datetime, vote, deputy_id, legislature_term_id)
         logger.debug(
             "Upserting normalized rollcall",
             extra={"voting_id": voting_id, "deputy_id": deputy_id, "vote": vote}

@@ -117,7 +117,7 @@ class NormalizedQueries:
     def upsert_rollcall(schema: str) -> str:
         return f"""
             INSERT INTO {schema}.rollcalls 
-            (voting_id, deputy_id, vote, voting_datetime, legislature_term_id)
+            (voting_id, voting_datetime, vote, deputy_id, legislature_term_id)
             VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (voting_id, deputy_id) DO UPDATE
             SET vote = EXCLUDED.vote,

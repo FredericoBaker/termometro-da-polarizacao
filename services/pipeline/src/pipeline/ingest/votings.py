@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-from base import BaseIngestor
+from pipeline.ingest.base import BaseIngestor
 from termopol_db.repositories import RawVotingRepository, RawRollcallRepository
 
 logger = logging.getLogger(__name__)
@@ -67,10 +67,6 @@ class VotingsIngestor(BaseIngestor):
             rollcalls = rollcalls_data.get("dados", [])
             
             if not rollcalls:
-                logger.warning(
-                    "No rollcalls found for voting",
-                    extra={"voting_id": voting_id}
-                )
                 return
             
             logger.info(
