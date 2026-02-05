@@ -112,6 +112,17 @@ class RawVotingRepository(BaseRepository):
             The inserted/updated voting record
         """
         query = RawQueries.upsert_voting(self.schema)
+
+        # Normalize approval to boolean or None
+        approval_raw = voting_data.get('approval')
+        approval = None
+        if approval_raw is not None:
+            s = str(approval_raw).strip().lower()
+            if s == '1':
+                approval = True
+            elif s == '0':
+                approval = False
+
         params = (
             voting_data['id'],
             voting_data['uri'],
@@ -123,7 +134,7 @@ class RawVotingRepository(BaseRepository):
             voting_data['proposition_subject'],
             voting_data['proposition_subject_uri'],
             voting_data.get('description'),
-            voting_data.get('approval'),
+            approval,
             self._serialize_json(voting_data.get('payload', {}))
         )
         logger.debug(

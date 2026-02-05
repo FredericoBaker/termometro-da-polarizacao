@@ -73,7 +73,3 @@ class DatabaseConnectionPool:
 
 def get_db_pool() -> DatabaseConnectionPool:
     return DatabaseConnectionPool()
-
-
-def get_schema() -> str:
-    return get_schema()

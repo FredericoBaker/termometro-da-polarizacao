@@ -1,12 +1,23 @@
 CREATE SCHEMA IF NOT EXISTS termopol;
 
+CREATE TABLE IF NOT EXISTS termopol.ingestion_log (
+    id SERIAL PRIMARY KEY,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')),
+    init_logic_ts TIMESTAMPTZ NOT NULL,
+    end_logic_ts TIMESTAMPTZ,
+    error_message TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS termopol.raw_parties (
     id INTEGER PRIMARY KEY,
     party_code TEXT NOT NULL,
     name TEXT NOT NULL,
     uri TEXT NOT NULL,
     payload JSONB NOT NULL,
-    ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.raw_deputies (
@@ -20,7 +31,8 @@ CREATE TABLE IF NOT EXISTS termopol.raw_deputies (
     photo_url TEXT,
     email TEXT,
     payload JSONB NOT NULL,
-    ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.raw_votings (
@@ -36,7 +48,8 @@ CREATE TABLE IF NOT EXISTS termopol.raw_votings (
     description TEXT,
     approval BOOLEAN,
     payload JSONB NOT NULL,
-    ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.raw_rollcalls (
@@ -53,7 +66,9 @@ CREATE TABLE IF NOT EXISTS termopol.raw_rollcalls (
     deputy_legislature_id INTEGER NOT NULL,
     deputy_photo_url TEXT,
     payload JSONB NOT NULL,
-    ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    UNIQUE (voting_id, deputy_id)
 );
 
 CREATE TABLE IF NOT EXISTS termopol.parties (
@@ -62,20 +77,26 @@ CREATE TABLE IF NOT EXISTS termopol.parties (
     party_code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     uri TEXT NOT NULL
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.deputies (
     id SERIAL PRIMARY KEY,
     external_id INTEGER NOT NULL UNIQUE,
     name TEXT NOT NULL,
-    state_code TEXT NOT NULL
+    state_code TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.deputies_legislature_terms (
     id SERIAL PRIMARY KEY,
     deputy_id INTEGER NOT NULL REFERENCES termopol.deputies(id),
     legislature_id INTEGER NOT NULL,
-    party_id INTEGER NOT NULL REFERENCES termopol.parties(id)
+    party_id INTEGER NOT NULL REFERENCES termopol.parties(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.votings (
@@ -83,7 +104,9 @@ CREATE TABLE IF NOT EXISTS termopol.votings (
     external_id TEXT NOT NULL UNIQUE,
     date DATE NOT NULL,
     registration_datetime TIMESTAMPTZ NOT NULL,
-    approval BOOLEAN
+    approval BOOLEAN,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.rollcalls (
@@ -92,7 +115,9 @@ CREATE TABLE IF NOT EXISTS termopol.rollcalls (
     voting_datetime TIMESTAMPTZ NOT NULL,
     vote TEXT NOT NULL,
     deputy_id INTEGER NOT NULL REFERENCES termopol.deputies(id),
-    legislature_term_id INTEGER NOT NULL REFERENCES termopol.deputies_legislature_terms(id)
+    legislature_term_id INTEGER NOT NULL REFERENCES termopol.deputies_legislature_terms(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS termopol.graph_time_granularities (
@@ -110,6 +135,8 @@ CREATE TABLE IF NOT EXISTS termopol.graph (
     legislature INTEGER,
     year INTEGER,
     month DATE, -- First day of month
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (time_granularity_id, legislature, year, month),
     CHECK (
         (legislature IS NOT NULL AND year IS NULL AND month IS NULL)
@@ -126,6 +153,7 @@ CREATE TABLE IF NOT EXISTS termopol.edges (
     abs_w INTEGER NOT NULL,
     alpha_deputy_a DOUBLE PRECISION,
     alpha_deputy_b DOUBLE PRECISION,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (graph_id, deputy_a, deputy_b),
     CHECK (deputy_a < deputy_b)
@@ -139,12 +167,10 @@ CREATE TABLE IF NOT EXISTS termopol.polarization_metrics (
     one_positive_triads BIGINT NOT NULL,
     zero_positive_triads BIGINT NOT NULL,
     polarization_index DOUBLE PRECISION NOT NULL,
-    computed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (graph_id)
 );
-
-CREATE INDEX IF NOT EXISTS uq_raw_rollcalls_vote
-    ON termopol.raw_rollcalls (voting_id, deputy_id);
 
 CREATE INDEX IF NOT EXISTS idx_raw_votings_date
   ON termopol.raw_votings (date);
@@ -160,3 +186,32 @@ CREATE INDEX IF NOT EXISTS idx_terms_legislature
 
 CREATE INDEX IF NOT EXISTS idx_edges_graph
   ON termopol.edges (graph_id);
+
+CREATE OR REPLACE FUNCTION termopol.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+
+CREATE TRIGGER update_ingestion_log_modtime BEFORE UPDATE ON termopol.ingestion_log FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+
+-- Triggers for Raw Tables
+CREATE TRIGGER update_raw_parties_modtime BEFORE UPDATE ON termopol.raw_parties FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_raw_deputies_modtime BEFORE UPDATE ON termopol.raw_deputies FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_raw_votings_modtime BEFORE UPDATE ON termopol.raw_votings FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_raw_rollcalls_modtime BEFORE UPDATE ON termopol.raw_rollcalls FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+
+-- Triggers for Normalized Tables
+CREATE TRIGGER update_parties_modtime BEFORE UPDATE ON termopol.parties FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_deputies_modtime BEFORE UPDATE ON termopol.deputies FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_deputies_legislature_terms_modtime BEFORE UPDATE ON termopol.deputies_legislature_terms FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_votings_modtime BEFORE UPDATE ON termopol.votings FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_rollcalls_modtime BEFORE UPDATE ON termopol.rollcalls FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+
+-- Triggers for Analytics/Graph Tables
+CREATE TRIGGER update_graph_modtime BEFORE UPDATE ON termopol.graph FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_edges_modtime BEFORE UPDATE ON termopol.edges FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_polarization_metrics_modtime BEFORE UPDATE ON termopol.polarization_metrics FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();

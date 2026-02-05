@@ -16,6 +16,7 @@ from termopol_db.repositories.graph import (
     EdgeRepository,
     PolarizationMetricRepository,
 )
+from termopol_db.repositories.ingestion_log import IngestionLogRepository
 
 __all__ = [
     # Base
@@ -34,4 +35,6 @@ __all__ = [
     'GraphRepository',
     'EdgeRepository',
     'PolarizationMetricRepository',
+    # Ingestion log repository
+    'IngestionLogRepository',
 ]
