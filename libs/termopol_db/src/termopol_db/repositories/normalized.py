@@ -1,6 +1,6 @@
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import date
+from typing import Dict, Any, List, Optional, Generator
+from datetime import date, datetime
 
 from termopol_db.repositories.base import BaseRepository
 from termopol_db.queries import NormalizedQueries
@@ -43,6 +43,46 @@ class NormalizedPartyRepository(BaseRepository):
         query = NormalizedQueries.get_all_parties(self.schema)
         return self._execute_query(query, fetch_one=False)
 
+    def get_parties_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get parties created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of party records
+        """
+        return self.get_by_date_range('parties', start_date, end_date, limit=limit, offset=offset)
+
+    def get_parties_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get parties created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Party records one at a time
+        """
+        yield from self.get_by_date_range_generator('parties', start_date, end_date, batch_size=batch_size)
+
 
 class NormalizedDeputyRepository(BaseRepository):
     
@@ -77,6 +117,46 @@ class NormalizedDeputyRepository(BaseRepository):
     def get_deputies_by_state(self, state_code: str) -> List[Dict[str, Any]]:
         query = NormalizedQueries.get_deputies_by_state(self.schema)
         return self._execute_query(query, (state_code,), fetch_one=False)
+
+    def get_deputies_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get deputies created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of deputy records
+        """
+        return self.get_by_date_range('deputies', start_date, end_date, limit=limit, offset=offset)
+
+    def get_deputies_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get deputies created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Deputy records one at a time
+        """
+        yield from self.get_by_date_range_generator('deputies', start_date, end_date, batch_size=batch_size)
     
     def upsert_deputy_legislature_term(
         self, 
@@ -165,6 +245,46 @@ class NormalizedVotingRepository(BaseRepository):
         query = NormalizedQueries.get_all_votings(self.schema)
         return self._execute_query(query, fetch_one=False)
 
+    def get_votings_by_created_updated_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get votings created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of voting records
+        """
+        return self.get_by_date_range('votings', start_date, end_date, limit=limit, offset=offset)
+
+    def get_votings_by_created_updated_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get votings created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Voting records one at a time
+        """
+        yield from self.get_by_date_range_generator('votings', start_date, end_date, batch_size=batch_size)
+
 
 class NormalizedRollcallRepository(BaseRepository):
     
@@ -204,3 +324,43 @@ class NormalizedRollcallRepository(BaseRepository):
     def get_rollcalls_by_deputy(self, deputy_id: int) -> List[Dict[str, Any]]:
         query = NormalizedQueries.get_rollcalls_by_deputy(self.schema)
         return self._execute_query(query, (deputy_id,), fetch_one=False)
+
+    def get_rollcalls_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get rollcalls created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of rollcall records
+        """
+        return self.get_by_date_range('rollcalls', start_date, end_date, limit=limit, offset=offset)
+
+    def get_rollcalls_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get rollcalls created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Rollcall records one at a time
+        """
+        yield from self.get_by_date_range_generator('rollcalls', start_date, end_date, batch_size=batch_size)

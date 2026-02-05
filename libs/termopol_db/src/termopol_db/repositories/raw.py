@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Generator
+from datetime import datetime
 
 from termopol_db.repositories.base import BaseRepository
 from termopol_db.queries import RawQueries
@@ -48,6 +49,53 @@ class RawPartyRepository(BaseRepository):
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
 
+    def get_parties_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get parties created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of party records
+        """
+        results = self.get_by_date_range('raw_parties', start_date, end_date, limit=limit, offset=offset)
+        for result in results:
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+        return results
+
+    def get_parties_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get parties created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Party records one at a time
+        """
+        for result in self.get_by_date_range_generator('raw_parties', start_date, end_date, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
+
 
 class RawDeputyRepository(BaseRepository):
     
@@ -95,6 +143,53 @@ class RawDeputyRepository(BaseRepository):
             if 'payload' in result:
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
+
+    def get_deputies_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get deputies created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of deputy records
+        """
+        results = self.get_by_date_range('raw_deputies', start_date, end_date, limit=limit, offset=offset)
+        for result in results:
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+        return results
+
+    def get_deputies_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get deputies created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Deputy records one at a time
+        """
+        for result in self.get_by_date_range_generator('raw_deputies', start_date, end_date, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
 
 
 class RawVotingRepository(BaseRepository):
@@ -158,6 +253,53 @@ class RawVotingRepository(BaseRepository):
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
 
+    def get_votings_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get votings created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of voting records
+        """
+        results = self.get_by_date_range('raw_votings', start_date, end_date, limit=limit, offset=offset)
+        for result in results:
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+        return results
+
+    def get_votings_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get votings created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Voting records one at a time
+        """
+        for result in self.get_by_date_range_generator('raw_votings', start_date, end_date, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
+
 
 class RawRollcallRepository(BaseRepository):
     
@@ -209,3 +351,50 @@ class RawRollcallRepository(BaseRepository):
             if 'payload' in result:
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
+
+    def get_rollcalls_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get rollcalls created or updated within a date range (paginated).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            limit: Number of records per page (default 1000)
+            offset: Number of records to skip (default 0)
+            
+        Returns:
+            List of rollcall records
+        """
+        results = self.get_by_date_range('raw_rollcalls', start_date, end_date, limit=limit, offset=offset)
+        for result in results:
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+        return results
+
+    def get_rollcalls_by_date_range_generator(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get rollcalls created or updated within a date range as a generator (memory efficient).
+        
+        Args:
+            start_date: Start datetime (inclusive)
+            end_date: End datetime (inclusive)
+            batch_size: Number of records to fetch per batch (default 1000)
+            
+        Yields:
+            Rollcalls records one at a time
+        """
+        for result in self.get_by_date_range_generator('raw_rollcalls', start_date, end_date, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
