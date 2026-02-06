@@ -323,42 +323,29 @@ class NormalizedRollcallRepository(BaseRepository):
         query = NormalizedQueries.get_rollcalls_by_deputy(self.schema)
         return self._execute_query(query, (deputy_id,), fetch_one=False)
 
-    def get_rollcalls_by_date_range(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        limit: int = 1000,
-        offset: int = 0
-    ) -> List[Dict[str, Any]]:
-        """
-        Get rollcalls created or updated within a date range (paginated).
-        
-        Args:
-            start_date: Start datetime (inclusive)
-            end_date: End datetime (inclusive)
-            limit: Number of records per page (default 1000)
-            offset: Number of records to skip (default 0)
-            
-        Returns:
-            List of rollcall records
-        """
-        return self.get_by_date_range('rollcalls', start_date, end_date, limit=limit, offset=offset)
-
-    def get_rollcalls_by_date_range_generator(
-        self,
-        start_date: datetime,
-        end_date: datetime,
+    def get_rollcalls_by_voting_generator(
+        self, 
+        voting_id: int, 
         batch_size: int = 1000
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Get rollcalls created or updated within a date range as a generator (memory efficient).
-        
-        Args:
-            start_date: Start datetime (inclusive)
-            end_date: End datetime (inclusive)
-            batch_size: Number of records to fetch per batch (default 1000)
-            
-        Yields:
-            Rollcall records one at a time
+        Get rollcalls associated with a voting using a paginated query.
         """
-        yield from self.get_by_date_range_generator('rollcalls', start_date, end_date, batch_size=batch_size)
+        offset = 0
+
+        while True:
+            query = NormalizedQueries.get_rollcalls_by_voting_paginated(self.schema)
+            params = (voting_id, batch_size, offset)
+            
+            batch = self._execute_query(query, params, fetch_one=False)
+            
+            if not batch:
+                break
+                
+            for record in batch:
+                yield record
+            
+            if len(batch) < batch_size:
+                break
+                
+            offset += batch_size

@@ -13,7 +13,7 @@ class GraphRepository(BaseRepository):
     def upsert_graph(
         self,
         time_granularity_id: int,
-        legislature: int,
+        legislature: Optional[int] = None,
         year: Optional[int] = None,
         month: Optional[int] = None
     ) -> Optional[Dict[str, Any]]:
@@ -23,8 +23,8 @@ class GraphRepository(BaseRepository):
         Args:
             time_granularity_id: Time granularity identifier (1=legislature, 2=year, 3=month)
             legislature: Legislature number
-            year: Year (optional, for year/month granularities)
-            month: Month 1-12 (optional, for month granularity)
+            year: Year
+            month: First day of the respective month
             
         Returns:
             The inserted/updated graph record

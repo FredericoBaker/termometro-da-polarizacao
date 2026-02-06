@@ -148,3 +148,12 @@ class NormalizedQueries:
             WHERE deputy_id = %s
             ORDER BY voting_id
         """
+
+    @staticmethod
+    def get_rollcalls_by_voting_paginated(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.rollcalls 
+            WHERE voting_id = %s 
+            ORDER BY id 
+            LIMIT %s OFFSET %s
+        """
