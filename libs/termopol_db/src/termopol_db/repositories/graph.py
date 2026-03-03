@@ -50,17 +50,30 @@ class GraphRepository(BaseRepository):
         query = GraphQueries.get_graph_by_legislature(self.schema)
         return self._execute_query(query, (legislature,), fetch_one=True)
     
-    def get_graph_by_year(self, year: int) -> List[Dict[str, Any]]:
+    def get_graph_by_year(self, year: int) -> Optional[Dict[str, Any]]:
         query = GraphQueries.get_graph_by_year(self.schema)
-        return self._execute_query(query, (year,), fetch_one=False)
+        return self._execute_query(query, (year,), fetch_one=True)
     
-    def get_graph_by_month(self, year: int, month: int) -> Optional[Dict[str, Any]]:
+    def get_graph_by_month(self, month_date: date) -> Optional[Dict[str, Any]]:
         query = GraphQueries.get_graph_by_month(self.schema)
-        return self._execute_query(query, (month,), fetch_one=True)
+        return self._execute_query(query, (month_date,), fetch_one=True)
     
     def get_all_graphs(self) -> List[Dict[str, Any]]:
         query = GraphQueries.get_all_graphs(self.schema)
         return self._execute_query(query, fetch_one=False)
+    
+    def upsert_graph_voting(self, graph_id: int, voting_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Record that a voting has been processed for a specific graph.
+        Returns the record if it was inserted, or None if it already existed.
+        """
+        query = GraphQueries.upsert_graph_voting(self.schema)
+        return self._execute_query(query, (graph_id, voting_id), fetch_one=True)
+    
+    def get_graph_voting(self, graph_id: int, voting_id: int) -> Optional[Dict[str, Any]]:
+        """Check if a voting has been processed for a specific graph."""
+        query = GraphQueries.get_graph_voting(self.schema)
+        return self._execute_query(query, (graph_id, voting_id), fetch_one=True)
 
 
 class EdgeRepository(BaseRepository):

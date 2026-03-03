@@ -44,8 +44,8 @@ class GraphQueries:
             (graph_id, deputy_a, deputy_b, w_signed, abs_w, alpha_deputy_a, alpha_deputy_b)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
-            SET w_signed = EXCLUDED.w_signed,
-                abs_w = EXCLUDED.abs_w,
+            SET w_signed = {schema}.edges.w_signed + EXCLUDED.w_signed,
+                abs_w = {schema}.edges.abs_w + EXCLUDED.abs_w,
                 alpha_deputy_a = EXCLUDED.alpha_deputy_a,
                 alpha_deputy_b = EXCLUDED.alpha_deputy_b,
                 updated_at = now()
@@ -79,6 +79,24 @@ class GraphQueries:
     def delete_edges_by_graph(schema: str) -> str:
         return f"DELETE FROM {schema}.edges WHERE graph_id = %s"
     
+    # ===================== GRAPH VOTINGS TRACKING =====================
+
+    @staticmethod
+    def upsert_graph_voting(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.graph_votings (graph_id, voting_id)
+            VALUES (%s, %s)
+            ON CONFLICT (graph_id, voting_id) DO NOTHING
+            RETURNING *;
+        """
+
+    @staticmethod
+    def get_graph_voting(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.graph_votings 
+            WHERE graph_id = %s AND voting_id = %s
+        """
+
     # ===================== POLARIZATION METRICS =====================
     
     @staticmethod

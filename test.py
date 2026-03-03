@@ -11,6 +11,7 @@ from pipeline.transform.parties import PartyTransformer
 from pipeline.transform.deputies import DeputyTransformer
 from pipeline.transform.votings import VotingTransformer
 from pipeline.transform.rollcalls import RollCallTransformer
+from pipeline.graph.build import BuildGraph
 
 def test_ingest():
     print("\n" + "=" * 60)
@@ -81,13 +82,35 @@ def test_transform():
     rollcall_transformer.transform(start_date, end_date)
     print("✓ RollCall transformation completed")
 
+def test_graph():
+    print("\n" + "=" * 60)
+    print("TESTING GRAPH STEP")
+    print("=" * 60)
+    
+    # Define date range for graph build
+    end_date = datetime.utcnow()
+    # Using 2024 to catch the latest data in the DB
+    start_date = datetime(2024, 1, 1)
+    
+    print(f"\nDate range: {start_date} to {end_date}")
+    
+    print("\n" + "-" * 60)
+    print("Testing BuildGraph...")
+    print("-" * 60)
+    graph_builder = BuildGraph()
+    graph_builder.build(start_date, end_date)
+    print("✓ Graph building completed")
+
 def main():
     try:
         # Uncomment to test ingest step
         # test_ingest()
         
         # Test transform step
-        test_transform()
+        # test_transform()
+        
+        # Test graph step
+        test_graph()
         
         print("\n" + "=" * 60)
         print("ALL TESTS COMPLETED SUCCESSFULLY!")

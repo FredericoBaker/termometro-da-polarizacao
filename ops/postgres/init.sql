@@ -174,6 +174,13 @@ CREATE TABLE IF NOT EXISTS termopol.polarization_metrics (
     PRIMARY KEY (graph_id)
 );
 
+CREATE TABLE IF NOT EXISTS termopol.graph_votings (
+    graph_id INTEGER NOT NULL REFERENCES termopol.graph(id),
+    voting_id INTEGER NOT NULL REFERENCES termopol.votings(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (graph_id, voting_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_raw_votings_date
   ON termopol.raw_votings (date);
 
