@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 import itertools
+import math
 import logging
 
 from termopol_db.repositories import (
@@ -26,14 +27,14 @@ class BuildGraph:
         self.edge_repo = EdgeRepository()
 
     def build(self, start_date: datetime, end_date: datetime) -> None:
-        logger.info(f"Starting graph build from {start_date} to {end_date}")
+        logger.info("Starting graph build", extra={"start_date": start_date, "end_date": end_date})
         voting_count = 0
         for voting in self.voting_repo.get_votings_by_created_updated_range_generator(start_date, end_date):
             voting_count += 1
             if voting_count % 10 == 0:
-                print(f"Processing voting {voting_count}...")
+                logger.info("Processing voting batch", extra={"processed_votings": voting_count})
             self._process_voting(voting)
-        print(f"Finished processing {voting_count} votings.")
+        logger.info("Finished graph build", extra={"total_votings_processed": voting_count})
 
     def _process_voting(self, voting: dict) -> None:
         voting_id = voting.get('id')
@@ -85,29 +86,47 @@ class BuildGraph:
             return
 
         # 2. Get rollcalls and group deputies by vote
-        yes_votes = []
-        no_votes = []
+        yes_votes = set()
+        no_votes = set()
         
         for rollcall in self.rollcall_repo.get_rollcalls_by_voting_generator(voting_id):
             deputy_id = rollcall.get('deputy_id')
             vote = rollcall.get('vote')
+
+            if deputy_id is None:
+                logger.warning(
+                    "Skipping rollcall without deputy_id",
+                    extra={"voting_id": voting_id, "rollcall_vote": vote},
+                )
+                continue
             
             if vote == 1: # Sim
-                yes_votes.append(deputy_id)
+                if deputy_id in no_votes:
+                    logger.warning(
+                        "Conflicting rollcall vote for deputy; keeping latest vote",
+                        extra={"voting_id": voting_id, "deputy_id": deputy_id, "latest_vote": 1},
+                    )
+                    no_votes.discard(deputy_id)
+                yes_votes.add(deputy_id)
             elif vote == 0: # Não
-                no_votes.append(deputy_id)
+                if deputy_id in yes_votes:
+                    logger.warning(
+                        "Conflicting rollcall vote for deputy; keeping latest vote",
+                        extra={"voting_id": voting_id, "deputy_id": deputy_id, "latest_vote": 0},
+                    )
+                    yes_votes.discard(deputy_id)
+                no_votes.add(deputy_id)
         
-        all_voters = yes_votes + no_votes
+        all_voters = sorted(yes_votes | no_votes)
         if len(all_voters) < 2:
             return
 
         # 3. Process pairs and update edges
         # We need to update edges for all combinations of deputies who voted
         pair_count = 0
-        pairs = list(itertools.combinations(sorted(all_voters), 2))
-        total_pairs = len(pairs)
+        total_pairs = math.comb(len(all_voters), 2)
         
-        for d1, d2 in pairs:
+        for d1, d2 in itertools.combinations(all_voters, 2):
             # Determine weight delta
             # Same vote: +1, Different vote: -1
             v1 = 1 if d1 in yes_votes else 0
@@ -128,7 +147,10 @@ class BuildGraph:
             
             pair_count += 1
             if pair_count % 5000 == 0:
-                print(f"  Processed {pair_count}/{total_pairs} pairs for voting {voting_id}...")
+                logger.debug(
+                    "Processed edge pairs for voting",
+                    extra={"voting_id": voting_id, "processed_pairs": pair_count, "total_pairs": total_pairs},
+                )
         
         # 4. Mark voting as processed for these graphs
         for graph in graphs_to_update:

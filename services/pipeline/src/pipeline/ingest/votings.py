@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
+import requests
 
 from pipeline.ingest.base import BaseIngestor
 from termopol_db.repositories import RawVotingRepository, RawRollcallRepository
@@ -76,6 +77,15 @@ class VotingsIngestor(BaseIngestor):
             
             for rollcall in rollcalls:
                 self._process_rollcall(voting_id, rollcall)
+
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code if e.response is not None else None
+            if status_code == 404:
+                logger.warning(
+                    "Rollcalls endpoint returned 404; skipping voting rollcalls",
+                    extra={"voting_id": voting_id, "status_code": status_code},
+                )
+                return
                 
         except Exception as e:
             logger.error(
@@ -86,33 +96,41 @@ class VotingsIngestor(BaseIngestor):
             raise
 
     def _process_rollcall(self, voting_id: int, rollcall: Dict[str, Any]) -> None:
+        deputy_info = rollcall.get('deputado_')
+        deputy_id = deputy_info.get('id') if isinstance(deputy_info, dict) else None
+
         try:
-            deputy = rollcall.get('deputado_')
+            if not isinstance(deputy_info, dict) or deputy_id is None:
+                logger.warning(
+                    "Skipping rollcall with invalid deputy payload",
+                    extra={"voting_id": voting_id, "rollcall_vote": rollcall.get('tipoVoto')},
+                )
+                return
 
             self.rollcall_repo.upsert_rollcall({
                 'voting_id': voting_id,
                 'voting_datetime': rollcall.get('dataRegistroVoto'),
                 'vote': rollcall.get('tipoVoto'),
-                'deputy_id': deputy.get('id'),
-                'deputy_uri': deputy.get('uri'),
-                'deputy_name': deputy.get('nome'),
-                'deputy_party_code': deputy.get('siglaPartido'),
-                'deputy_party_uri': deputy.get('uriPartido'),
-                'deputy_state_code': deputy.get('siglaUf'),
-                'deputy_legislature_id': deputy.get('idLegislatura'),
-                'deputy_photo_url': deputy.get('urlFoto'),
+                'deputy_id': deputy_info.get('id'),
+                'deputy_uri': deputy_info.get('uri'),
+                'deputy_name': deputy_info.get('nome'),
+                'deputy_party_code': deputy_info.get('siglaPartido'),
+                'deputy_party_uri': deputy_info.get('uriPartido'),
+                'deputy_state_code': deputy_info.get('siglaUf'),
+                'deputy_legislature_id': deputy_info.get('idLegislatura'),
+                'deputy_photo_url': deputy_info.get('urlFoto'),
                 'payload': rollcall,
             })
             
             logger.debug(
                 "Rollcall processed successfully",
-                extra={"voting_id": voting_id, "deputy_id": deputy.get('id'), "vote": rollcall.get('tipoVoto')}
+                extra={"voting_id": voting_id, "deputy_id": deputy_id, "vote": rollcall.get('tipoVoto')}
             )
             
-        except Exception as e:
+        except Exception:
             logger.error(
                 "Failed to process rollcall",
-                extra={"voting_id": voting_id, "deputy_id": rollcall.get('deputado_').get('id')},
+                extra={"voting_id": voting_id, "deputy_id": deputy_id},
                 exc_info=True
             )
             raise

@@ -1,15 +1,20 @@
 from pipeline.config.loader import get
 import requests
 import logging
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 class CamaraClient:
+    RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
     def __init__(self):
         self.base_url = get("camara_api", "base_url")
         self.timeout = get("camara_api", "timeout_seconds")
         self.page_size = get("camara_api", "page_size")
-        self.retries = get("camara_api", "retries")
+        self.retries = max(1, int(get("camara_api", "retries", default=1)))
+        self.retry_backoff_seconds = float(get("camara_api", "retry_backoff_seconds", default=1.0))
 
         logger.debug(
             "Initialized CamaraClient",
@@ -18,10 +23,11 @@ class CamaraClient:
                 "timeout_seconds": self.timeout,
                 "page_size": self.page_size,
                 "retries": self.retries,
+                "retry_backoff_seconds": self.retry_backoff_seconds,
             },
         )
 
-    def fetch_data(self, endpoint: str, params: dict) -> dict:
+    def fetch_data(self, endpoint: str, params: dict[str, Any]) -> dict:
         url = f"{self.base_url}{endpoint}"
         last_error = None
         
@@ -33,6 +39,11 @@ class CamaraClient:
                 )
 
                 response = requests.get(url, params=params, timeout=self.timeout)
+                if response.status_code in self.RETRYABLE_STATUS_CODES:
+                    raise requests.exceptions.HTTPError(
+                        f"Retryable status code received: {response.status_code}",
+                        response=response,
+                    )
                 response.raise_for_status()
 
                 logger.debug(
@@ -42,16 +53,41 @@ class CamaraClient:
 
                 return response.json()
             
-            except requests.exceptions.Timeout as e:
-                last_error = e
-
-                logger.warning(
-                    "Request timeout",
-                    extra={"endpoint": endpoint, "attempt": attempt, "max_retries": self.retries},
+            except requests.exceptions.RequestException as exc:
+                last_error = exc
+                status_code = getattr(getattr(exc, "response", None), "status_code", None)
+                is_retryable = (
+                    isinstance(exc, (requests.exceptions.Timeout, requests.exceptions.ConnectionError))
+                    or status_code in self.RETRYABLE_STATUS_CODES
                 )
 
-                if attempt < self.retries:
-                    continue
+                if attempt >= self.retries or not is_retryable:
+                    logger.error(
+                        "Request failed and will not be retried",
+                        extra={
+                            "endpoint": endpoint,
+                            "attempt": attempt,
+                            "max_retries": self.retries,
+                            "status_code": status_code,
+                            "retryable": is_retryable,
+                        },
+                        exc_info=True,
+                    )
+                    break
+
+                backoff_seconds = self.retry_backoff_seconds * (2 ** (attempt - 1))
+                logger.warning(
+                    "Request failed; retrying",
+                    extra={
+                        "endpoint": endpoint,
+                        "attempt": attempt,
+                        "max_retries": self.retries,
+                        "status_code": status_code,
+                        "retry_in_seconds": backoff_seconds,
+                    },
+                    exc_info=True,
+                )
+                time.sleep(backoff_seconds)
         
         logger.error(
             "Max retries exceeded for endpoint",
@@ -59,6 +95,8 @@ class CamaraClient:
             exc_info=last_error,
         )
 
+        if last_error is None:
+            raise RuntimeError(f"Request failed for endpoint '{endpoint}' without captured exception")
         raise last_error
 
     def get_parties(self, data_inicio: str, data_fim: str, page: int = 1) -> dict:

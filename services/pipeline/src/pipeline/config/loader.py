@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from typing import Optional
 import yaml
 from dotenv import load_dotenv
 
@@ -43,7 +44,7 @@ def load_config() -> dict:
     return _CONFIG_CACHE
 
 
-def get(section: str, key: str | None = None, default=None):
+def get(section: str, key: Optional[str] = None, default=None):
     config = load_config()
 
     if section not in config:
