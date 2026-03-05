@@ -131,7 +131,7 @@ INSERT INTO termopol.graph_time_granularities (name) VALUES
   ('legislature'), ('year'), ('month')
 ON CONFLICT (name) DO NOTHING;
 
-CREATE TABLE IF NOT EXISTS termopol.graph (
+CREATE TABLE IF NOT EXISTS termopol.graphs (
     id SERIAL PRIMARY KEY,
     time_granularity_id INTEGER NOT NULL REFERENCES termopol.graph_time_granularities(id),
     legislature INTEGER,
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS termopol.graph (
 );
 
 CREATE TABLE IF NOT EXISTS termopol.edges (
-    graph_id INTEGER NOT NULL REFERENCES termopol.graph(id),
+    graph_id INTEGER NOT NULL REFERENCES termopol.graphs(id),
     deputy_a INTEGER NOT NULL REFERENCES termopol.deputies(id),
     deputy_b INTEGER NOT NULL REFERENCES termopol.deputies(id),
     w_signed INTEGER NOT NULL,
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS termopol.edges (
 );
 
 CREATE TABLE IF NOT EXISTS termopol.polarization_metrics (
-    graph_id INTEGER NOT NULL REFERENCES termopol.graph(id),
+    graph_id INTEGER NOT NULL REFERENCES termopol.graphs(id),
     triads_total BIGINT NOT NULL,
     three_positive_triads BIGINT NOT NULL,
     two_positive_triads BIGINT NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS termopol.polarization_metrics (
 );
 
 CREATE TABLE IF NOT EXISTS termopol.graph_votings (
-    graph_id INTEGER NOT NULL REFERENCES termopol.graph(id),
+    graph_id INTEGER NOT NULL REFERENCES termopol.graphs(id),
     voting_id INTEGER NOT NULL REFERENCES termopol.votings(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (graph_id, voting_id)
@@ -221,6 +221,6 @@ CREATE TRIGGER update_votings_modtime BEFORE UPDATE ON termopol.votings FOR EACH
 CREATE TRIGGER update_rollcalls_modtime BEFORE UPDATE ON termopol.rollcalls FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
 
 -- Triggers for Analytics/Graph Tables
-CREATE TRIGGER update_graph_modtime BEFORE UPDATE ON termopol.graph FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_graph_modtime BEFORE UPDATE ON termopol.graphs FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
 CREATE TRIGGER update_edges_modtime BEFORE UPDATE ON termopol.edges FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
 CREATE TRIGGER update_polarization_metrics_modtime BEFORE UPDATE ON termopol.polarization_metrics FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();

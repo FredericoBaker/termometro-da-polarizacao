@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
+from http import HTTPStatus
 import requests
 
 from pipeline.ingest.base import BaseIngestor
@@ -15,7 +16,10 @@ class VotingsIngestor(BaseIngestor):
     """
 
     def __init__(self, last_ingestion_date: Optional[datetime] = None):
-        super().__init__(last_ingestion_date)
+        super().__init__(
+            last_ingestion_date=last_ingestion_date,
+            non_fatal_http_status_codes={int(HTTPStatus.GATEWAY_TIMEOUT)},
+        )
         self.voting_repo = RawVotingRepository()
         self.rollcall_repo = RawRollcallRepository()
 
@@ -80,12 +84,18 @@ class VotingsIngestor(BaseIngestor):
 
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code if e.response is not None else None
-            if status_code == 404:
+            if status_code in (HTTPStatus.NOT_FOUND, HTTPStatus.GATEWAY_TIMEOUT):
                 logger.warning(
-                    "Rollcalls endpoint returned 404; skipping voting rollcalls",
+                    "Skipping voting rollcalls after HTTP error",
                     extra={"voting_id": voting_id, "status_code": status_code},
                 )
                 return
+            logger.error(
+                "Failed to fetch/process rollcalls for voting due to HTTP error",
+                extra={"voting_id": voting_id, "status_code": status_code},
+                exc_info=True
+            )
+            raise
                 
         except Exception as e:
             logger.error(

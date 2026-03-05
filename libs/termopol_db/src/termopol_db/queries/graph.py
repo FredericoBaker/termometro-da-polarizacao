@@ -45,7 +45,11 @@ class GraphQueries:
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
             SET w_signed = {schema}.edges.w_signed + EXCLUDED.w_signed,
-                abs_w = {schema}.edges.abs_w + EXCLUDED.abs_w,
+                abs_w = CASE
+                    WHEN {schema}.edges.abs_w < 0 THEN {schema}.edges.abs_w + 1
+                    WHEN {schema}.edges.abs_w > 0 THEN {schema}.edges.abs_w - 1
+                    ELSE EXCLUDED.w_signed
+                END,
                 alpha_deputy_a = EXCLUDED.alpha_deputy_a,
                 alpha_deputy_b = EXCLUDED.alpha_deputy_b,
                 updated_at = now()

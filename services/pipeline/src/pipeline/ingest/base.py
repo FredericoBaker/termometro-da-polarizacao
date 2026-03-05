@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from abc import ABC, abstractmethod
+import requests
 
 from pipeline.client.camara_client import CamaraClient
 
@@ -11,8 +12,13 @@ logger = logging.getLogger(__name__)
 class BaseIngestor(ABC):
     MAX_DAYS_INTERVAL = 90
 
-    def __init__(self, last_ingestion_date: Optional[datetime] = None):
+    def __init__(
+        self,
+        last_ingestion_date: Optional[datetime] = None,
+        non_fatal_http_status_codes: Optional[set[int]] = None,
+    ):
         self.camara_client = CamaraClient()
+        self.non_fatal_http_status_codes = set(non_fatal_http_status_codes or [])
         
         if last_ingestion_date is None:
             self.last_ingestion_date = datetime(datetime.now().year, 1, 1)
@@ -21,8 +27,15 @@ class BaseIngestor(ABC):
         
         logger.info(
             f"Initialized {self.__class__.__name__}",
-            extra={"last_ingestion_date": self.last_ingestion_date.isoformat()}
+            extra={
+                "last_ingestion_date": self.last_ingestion_date.isoformat(),
+                "non_fatal_http_status_codes": sorted(self.non_fatal_http_status_codes),
+            }
         )
+
+    def _is_non_fatal_http_error(self, exc: requests.exceptions.HTTPError) -> bool:
+        status_code = exc.response.status_code if exc.response is not None else None
+        return status_code in self.non_fatal_http_status_codes
 
     def ingest(self) -> None:
         current_date = datetime.now()
@@ -80,8 +93,26 @@ class BaseIngestor(ABC):
                 f"Fetching {self.get_entity_name()} page",
                 extra={"start_date": start_date, "end_date": end_date, "page": page}
             )
-            
-            data = self.get_data_from_api(start_date, end_date, page)
+
+            try:
+                data = self.get_data_from_api(start_date, end_date, page)
+            except requests.exceptions.HTTPError as exc:
+                status_code = exc.response.status_code if exc.response is not None else None
+                if self._is_non_fatal_http_error(exc):
+                    logger.warning(
+                        "Skipping page after non-fatal HTTP error",
+                        extra={
+                            "entity": self.get_entity_name(),
+                            "start_date": start_date,
+                            "end_date": end_date,
+                            "page": page,
+                            "status_code": status_code,
+                        },
+                    )
+                    page += 1
+                    continue
+                raise
+
             items = data.get("dados", [])
             
             if not items:
@@ -97,7 +128,23 @@ class BaseIngestor(ABC):
                 break
 
             for item in items:
-                self.process_item(item)
+                try:
+                    self.process_item(item)
+                except requests.exceptions.HTTPError as exc:
+                    status_code = exc.response.status_code if exc.response is not None else None
+                    if self._is_non_fatal_http_error(exc):
+                        logger.warning(
+                            "Skipping item after non-fatal HTTP error",
+                            extra={
+                                "entity": self.get_entity_name(),
+                                "start_date": start_date,
+                                "end_date": end_date,
+                                "page": page,
+                                "status_code": status_code,
+                            },
+                        )
+                        continue
+                    raise
                 items_processed += 1
 
             logger.debug(
