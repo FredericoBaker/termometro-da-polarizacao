@@ -7,7 +7,7 @@ class GraphQueries:
     @staticmethod
     def upsert_graph(schema: str) -> str:
         return f"""
-            INSERT INTO {schema}.graph 
+            INSERT INTO {schema}.graphs 
             (time_granularity_id, legislature, year, month)
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (time_granularity_id, legislature, year, month) DO UPDATE
@@ -17,23 +17,23 @@ class GraphQueries:
     
     @staticmethod
     def get_graph_by_id(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graph WHERE id = %s"
+        return f"SELECT * FROM {schema}.graphs WHERE id = %s"
     
     @staticmethod
     def get_graph_by_legislature(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graph WHERE legislature = %s"
+        return f"SELECT * FROM {schema}.graphs WHERE legislature = %s"
     
     @staticmethod
     def get_graph_by_year(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graph WHERE year = %s"
+        return f"SELECT * FROM {schema}.graphs WHERE year = %s"
     
     @staticmethod
     def get_graph_by_month(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graph WHERE month = %s"
+        return f"SELECT * FROM {schema}.graphs WHERE month = %s"
     
     @staticmethod
     def get_all_graphs(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graph ORDER BY legislature DESC, year DESC, month DESC"
+        return f"SELECT * FROM {schema}.graphs ORDER BY legislature DESC, year DESC, month DESC"
     
     # ===================== EDGES =====================
     
