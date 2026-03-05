@@ -42,14 +42,10 @@ class GraphQueries:
         return f"""
             INSERT INTO {schema}.edges 
             (graph_id, deputy_a, deputy_b, w_signed, abs_w, alpha_deputy_a, alpha_deputy_b)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, ABS(%s), %s, %s)
             ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
             SET w_signed = {schema}.edges.w_signed + EXCLUDED.w_signed,
-                abs_w = CASE
-                    WHEN {schema}.edges.abs_w < 0 THEN {schema}.edges.abs_w + 1
-                    WHEN {schema}.edges.abs_w > 0 THEN {schema}.edges.abs_w - 1
-                    ELSE EXCLUDED.w_signed
-                END,
+                abs_w = ABS({schema}.edges.w_signed + EXCLUDED.w_signed),
                 alpha_deputy_a = EXCLUDED.alpha_deputy_a,
                 alpha_deputy_b = EXCLUDED.alpha_deputy_b,
                 updated_at = now()

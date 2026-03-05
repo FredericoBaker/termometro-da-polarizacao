@@ -84,7 +84,6 @@ class EdgeRepository(BaseRepository):
         deputy_a: int,
         deputy_b: int,
         w_signed: float,
-        abs_w: float,
         alpha_deputy_a: float,
         alpha_deputy_b: float
     ) -> Optional[Dict[str, Any]]:
@@ -97,7 +96,6 @@ class EdgeRepository(BaseRepository):
             deputy_a: First deputy ID
             deputy_b: Second deputy ID
             w_signed: Signed weight (can be negative)
-            abs_w: Absolute weight
             alpha_deputy_a: Alpha coefficient for deputy_a
             alpha_deputy_b: Alpha coefficient for deputy_b
             
@@ -109,7 +107,7 @@ class EdgeRepository(BaseRepository):
             deputy_a, deputy_b = deputy_b, deputy_a
         
         query = GraphQueries.upsert_edge(self.schema)
-        params = (graph_id, deputy_a, deputy_b, w_signed, abs_w, alpha_deputy_a, alpha_deputy_b)
+        params = (graph_id, deputy_a, deputy_b, w_signed, w_signed, alpha_deputy_a, alpha_deputy_b)
         logger.debug(
             "Upserting edge",
             extra={

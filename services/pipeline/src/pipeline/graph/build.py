@@ -140,7 +140,6 @@ class BuildGraph:
                     deputy_a=d1,
                     deputy_b=d2,
                     w_signed=delta_w,
-                    abs_w=delta_w,
                     alpha_deputy_a=None,
                     alpha_deputy_b=None
                 )
