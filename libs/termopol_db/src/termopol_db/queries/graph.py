@@ -149,7 +149,7 @@ class GraphQueries:
                 one_positive_triads = EXCLUDED.one_positive_triads,
                 zero_positive_triads = EXCLUDED.zero_positive_triads,
                 polarization_index = EXCLUDED.polarization_index,
-                computed_at = now()
+                updated_at = now()
             RETURNING *;
         """
     

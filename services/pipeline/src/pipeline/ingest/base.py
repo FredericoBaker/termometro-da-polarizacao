@@ -15,10 +15,12 @@ class BaseIngestor(ABC):
     def __init__(
         self,
         last_ingestion_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
         non_fatal_http_status_codes: Optional[set[int]] = None,
     ):
         self.camara_client = CamaraClient()
         self.non_fatal_http_status_codes = set(non_fatal_http_status_codes or [])
+        self.end_date = end_date
         
         if last_ingestion_date is None:
             self.last_ingestion_date = datetime(datetime.now().year, 1, 1)
@@ -29,6 +31,7 @@ class BaseIngestor(ABC):
             f"Initialized {self.__class__.__name__}",
             extra={
                 "last_ingestion_date": self.last_ingestion_date.isoformat(),
+                "end_date": self.end_date.isoformat() if self.end_date else None,
                 "non_fatal_http_status_codes": sorted(self.non_fatal_http_status_codes),
             }
         )
@@ -38,7 +41,7 @@ class BaseIngestor(ABC):
         return status_code in self.non_fatal_http_status_codes
 
     def ingest(self) -> None:
-        current_date = datetime.now()
+        current_date = self.end_date or datetime.now()
         start_date = self.last_ingestion_date
         
         logger.info(

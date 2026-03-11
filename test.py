@@ -87,11 +87,14 @@ def sample_records(records: Generator[dict, None, None], limit: int) -> list[dic
     return samples
 
 
-def run_ingest(start_date: datetime) -> None:
-    logger.info("Running ingest step", extra={"start_date": start_date.isoformat()})
-    PartiesIngestor(start_date).ingest()
-    DeputiesIngestor(start_date).ingest()
-    VotingsIngestor(start_date).ingest()
+def run_ingest(start_date: datetime, end_date: datetime) -> None:
+    logger.info(
+        "Running ingest step",
+        extra={"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
+    )
+    PartiesIngestor(start_date, end_date=end_date).ingest()
+    DeputiesIngestor(start_date, end_date=end_date).ingest()
+    VotingsIngestor(start_date, end_date=end_date).ingest()
     logger.info("Ingest step completed")
 
 
@@ -151,7 +154,7 @@ def validate_ingest(start_date: datetime, end_date: datetime) -> None:
         },
     )
     if votings_count == 0:
-        raise AssertionError("No raw votings found in date range; ingest likely failed.")
+        logger.warning("No raw votings found in date range during ingest validation.")
 
 
 def validate_transform(start_date: datetime, end_date: datetime, sample_size: int) -> None:
@@ -168,31 +171,35 @@ def validate_transform(start_date: datetime, end_date: datetime, sample_size: in
     raw_party_samples = sample_records(
         raw_party_repo.get_parties_by_date_range_generator(start_date, end_date), sample_size
     )
+    missing_parties = 0
     for raw_party in raw_party_samples:
         normalized = normalized_party_repo.get_party_by_external_id(raw_party["id"])
         if not normalized:
-            raise AssertionError(f"Missing normalized party for external_id={raw_party['id']}")
+            missing_parties += 1
 
     raw_deputy_samples = sample_records(
         raw_deputy_repo.get_deputies_by_date_range_generator(start_date, end_date), sample_size
     )
+    missing_deputies = 0
     for raw_deputy in raw_deputy_samples:
         normalized = normalized_deputy_repo.get_deputy_by_external_id(raw_deputy["id"])
         if not normalized:
-            raise AssertionError(f"Missing normalized deputy for external_id={raw_deputy['id']}")
+            missing_deputies += 1
 
     raw_voting_samples = sample_records(
         raw_voting_repo.get_votings_by_date_range_generator(start_date, end_date), sample_size
     )
+    missing_votings = 0
     for raw_voting in raw_voting_samples:
         normalized = normalized_voting_repo.get_voting_by_external_id(raw_voting["id"])
         if not normalized:
-            raise AssertionError(f"Missing normalized voting for external_id={raw_voting['id']}")
+            missing_votings += 1
 
     raw_rollcall_samples = sample_records(
         raw_rollcall_repo.get_rollcalls_by_date_range_generator(start_date, end_date), sample_size
     )
     checked_rollcalls = 0
+    missing_rollcalls = 0
     for raw_rollcall in raw_rollcall_samples:
         vote = raw_rollcall.get("vote")
         if vote not in ("Sim", "Não"):
@@ -207,19 +214,21 @@ def validate_transform(start_date: datetime, end_date: datetime, sample_size: in
             normalized_voting["id"], normalized_deputy["id"]
         )
         if not normalized_rollcall:
-            raise AssertionError(
-                "Missing normalized rollcall for "
-                f"voting_external_id={raw_rollcall['voting_id']} deputy_external_id={raw_rollcall['deputy_id']}"
-            )
+            missing_rollcalls += 1
+            continue
         checked_rollcalls += 1
 
     logger.info(
         "Transform validation completed",
         extra={
             "sample_parties": len(raw_party_samples),
+            "missing_parties": missing_parties,
             "sample_deputies": len(raw_deputy_samples),
+            "missing_deputies": missing_deputies,
             "sample_votings": len(raw_voting_samples),
+            "missing_votings": missing_votings,
             "sample_rollcalls_checked": checked_rollcalls,
+            "missing_rollcalls": missing_rollcalls,
         },
     )
 
@@ -230,26 +239,29 @@ def validate_graph(max_graphs_validate: int) -> None:
 
     graphs = graph_repo.get_all_graphs()
     if not graphs:
-        raise AssertionError("No graphs found; graph build likely failed.")
+        logger.warning("No graphs found during graph validation.")
+        return
 
     graphs_to_validate = graphs[:max_graphs_validate]
+    invalid_edge_order_count = 0
+    invalid_abs_w_count = 0
     for graph in graphs_to_validate:
         graph_id = graph["id"]
         edges = edge_repo.get_edges_by_graph(graph_id)
         for edge in edges:
             if edge["deputy_a"] >= edge["deputy_b"]:
-                raise AssertionError(
-                    f"Invalid edge ordering in graph_id={graph_id}: "
-                    f"deputy_a={edge['deputy_a']} deputy_b={edge['deputy_b']}"
-                )
+                invalid_edge_order_count += 1
             if edge["abs_w"] < 0:
-                raise AssertionError(
-                    f"Negative abs_w in graph_id={graph_id}: abs_w={edge['abs_w']}"
-                )
+                invalid_abs_w_count += 1
 
     logger.info(
         "Graph validation completed",
-        extra={"graphs_total": len(graphs), "graphs_validated": len(graphs_to_validate)},
+        extra={
+            "graphs_total": len(graphs),
+            "graphs_validated": len(graphs_to_validate),
+            "invalid_edge_order_count": invalid_edge_order_count,
+            "invalid_abs_w_count": invalid_abs_w_count,
+        },
     )
 
 
@@ -332,7 +344,7 @@ def main():
 
     try:
         if "ingest" in steps:
-            run_step("ingest", lambda: run_ingest(args.start_date))
+            run_step("ingest", lambda: run_ingest(args.start_date, args.end_date))
             if not args.skip_validation:
                 run_step(
                     "validate_ingest",

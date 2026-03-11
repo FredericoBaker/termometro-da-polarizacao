@@ -15,9 +15,14 @@ class VotingsIngestor(BaseIngestor):
     Ingest votings and their respective rollcalls from Câmara API.
     """
 
-    def __init__(self, last_ingestion_date: Optional[datetime] = None):
+    def __init__(
+        self,
+        last_ingestion_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ):
         super().__init__(
             last_ingestion_date=last_ingestion_date,
+            end_date=end_date,
             non_fatal_http_status_codes={int(HTTPStatus.GATEWAY_TIMEOUT)},
         )
         self.voting_repo = RawVotingRepository()

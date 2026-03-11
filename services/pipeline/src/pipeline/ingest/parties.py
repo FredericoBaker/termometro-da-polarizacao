@@ -10,8 +10,12 @@ logger = logging.getLogger(__name__)
 
 class PartiesIngestor(BaseIngestor):
 
-    def __init__(self, last_ingestion_date: Optional[datetime] = None):
-        super().__init__(last_ingestion_date)
+    def __init__(
+        self,
+        last_ingestion_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ):
+        super().__init__(last_ingestion_date=last_ingestion_date, end_date=end_date)
         self.party_repo = RawPartyRepository()
 
     def get_entity_name(self) -> str:

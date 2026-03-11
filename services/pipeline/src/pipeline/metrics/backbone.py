@@ -135,9 +135,10 @@ class BackboneMetrics:
     ) -> Tuple[float, List[Tuple[int, int]], float]:
         low = self.alpha_min
         high = self.alpha_max
-        best_alpha = self.alpha_min
-        best_pairs: List[Tuple[int, int]] = []
+        best_alpha = self.alpha_max
+        best_pairs = self._select_backbone_pairs(edges, degree_by_node, self.alpha_max)
         best_ratio = self._largest_component_ratio(node_ids, best_pairs)
+        found_feasible = best_ratio >= self.target_lcc_ratio
 
         for _ in range(self.max_alpha_iterations):
             mid = (low + high) / 2.0
@@ -145,15 +146,28 @@ class BackboneMetrics:
             candidate_ratio = self._largest_component_ratio(node_ids, candidate_pairs)
 
             if candidate_ratio >= self.target_lcc_ratio:
+                # Keep the smallest feasible alpha to maximize pruning.
+                found_feasible = True
                 best_alpha = mid
                 best_pairs = candidate_pairs
                 best_ratio = candidate_ratio
-                low = mid
-            else:
                 high = mid
+            else:
+                low = mid
 
             if high - low < self.alpha_tolerance:
                 break
+
+        if not found_feasible:
+            logger.warning(
+                "Could not satisfy target LCC ratio within alpha bounds; using alpha_max result",
+                extra={
+                    "target_lcc_ratio": self.target_lcc_ratio,
+                    "alpha_min": self.alpha_min,
+                    "alpha_max": self.alpha_max,
+                    "achieved_lcc_ratio": best_ratio,
+                },
+            )
 
         return best_alpha, best_pairs, best_ratio
 

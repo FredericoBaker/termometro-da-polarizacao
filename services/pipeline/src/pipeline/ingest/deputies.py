@@ -9,8 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 class DeputiesIngestor(BaseIngestor):
-    def __init__(self, last_ingestion_date: Optional[datetime] = None):
-        super().__init__(last_ingestion_date)
+    def __init__(
+        self,
+        last_ingestion_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ):
+        super().__init__(last_ingestion_date=last_ingestion_date, end_date=end_date)
         self.deputy_repo = RawDeputyRepository()
 
     def get_entity_name(self) -> str:
