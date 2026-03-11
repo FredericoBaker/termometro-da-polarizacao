@@ -16,7 +16,13 @@ class PolarizationMetrics:
       - two_positive_triads: ++-
       - one_positive_triads: +--
       - zero_positive_triads: ---
+
+    Polarization points are anchored so that:
+      - share(+--) among balanced triads = 0.00 -> 0 points
+      - share(+--) among balanced triads = 0.75 -> 100 points
+      - values above 0.75 can exceed 100 points
     """
+    POLARIZATION_REFERENCE_SHARE = 0.75
 
     def __init__(self):
         self.graph_repo = GraphRepository()
@@ -49,11 +55,16 @@ class PolarizationMetrics:
             + counts["zero_positive_triads"]
         )
 
-        # Signed-balance-inspired index: fraction of unbalanced triads.
-        polarization_index = 0.0
-        if triads_total > 0:
-            unbalanced = counts["two_positive_triads"] + counts["zero_positive_triads"]
-            polarization_index = unbalanced / triads_total
+        balanced_triads = counts["three_positive_triads"] + counts["one_positive_triads"]
+        two_negative_share_balanced = (
+            counts["one_positive_triads"] / balanced_triads if balanced_triads > 0 else 0.0
+        )
+        polarization_index = (
+            100.0 * (two_negative_share_balanced / self.POLARIZATION_REFERENCE_SHARE)
+            if self.POLARIZATION_REFERENCE_SHARE > 0
+            else 0.0
+        )
+        balance_ratio = balanced_triads / triads_total if triads_total > 0 else 0.0
 
         self.metric_repo.upsert_polarization_metric(
             graph_id=graph_id,
@@ -71,6 +82,9 @@ class PolarizationMetrics:
                 "graph_id": graph_id,
                 "backbone_edges": len(backbone_edges),
                 "triads_total": triads_total,
+                "balanced_triads": balanced_triads,
+                "two_negative_share_balanced": two_negative_share_balanced,
+                "balance_ratio": balance_ratio,
                 "polarization_index": polarization_index,
             },
         )
