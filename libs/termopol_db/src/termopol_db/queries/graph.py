@@ -41,15 +41,51 @@ class GraphQueries:
     def upsert_edge(schema: str) -> str:
         return f"""
             INSERT INTO {schema}.edges 
-            (graph_id, deputy_a, deputy_b, w_signed, abs_w, alpha_deputy_a, alpha_deputy_b)
+            (graph_id, deputy_a, deputy_b, w_signed, abs_w, p_deputy_a, p_deputy_b)
             VALUES (%s, %s, %s, %s, ABS(%s), %s, %s)
             ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
             SET w_signed = {schema}.edges.w_signed + EXCLUDED.w_signed,
                 abs_w = ABS({schema}.edges.w_signed + EXCLUDED.w_signed),
-                alpha_deputy_a = EXCLUDED.alpha_deputy_a,
-                alpha_deputy_b = EXCLUDED.alpha_deputy_b,
+                p_deputy_a = EXCLUDED.p_deputy_a,
+                p_deputy_b = EXCLUDED.p_deputy_b,
                 updated_at = now()
             RETURNING *;
+        """
+
+    @staticmethod
+    def update_edge_p_values(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.edges
+            SET p_deputy_a = %s,
+                p_deputy_b = %s,
+                updated_at = now()
+            WHERE graph_id = %s AND deputy_a = %s AND deputy_b = %s
+            RETURNING *;
+        """
+
+    @staticmethod
+    def reset_backbone_flags(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.edges
+            SET is_backbone = FALSE,
+                updated_at = now()
+            WHERE graph_id = %s;
+        """
+
+    @staticmethod
+    def set_backbone_flags(schema: str) -> str:
+        return f"""
+            WITH selected AS (
+                SELECT UNNEST(%s::INTEGER[]) AS deputy_a,
+                       UNNEST(%s::INTEGER[]) AS deputy_b
+            )
+            UPDATE {schema}.edges e
+            SET is_backbone = TRUE,
+                updated_at = now()
+            FROM selected s
+            WHERE e.graph_id = %s
+              AND e.deputy_a = s.deputy_a
+              AND e.deputy_b = s.deputy_b;
         """
     
     @staticmethod
@@ -128,5 +164,5 @@ class GraphQueries:
     def get_all_polarization_metrics(schema: str) -> str:
         return f"""
             SELECT * FROM {schema}.polarization_metrics 
-            ORDER BY computed_at DESC
+            ORDER BY updated_at DESC
         """

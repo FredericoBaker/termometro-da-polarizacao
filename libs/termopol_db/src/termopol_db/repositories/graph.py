@@ -84,8 +84,8 @@ class EdgeRepository(BaseRepository):
         deputy_a: int,
         deputy_b: int,
         w_signed: float,
-        alpha_deputy_a: float,
-        alpha_deputy_b: float
+        p_deputy_a: float,
+        p_deputy_b: float
     ) -> Optional[Dict[str, Any]]:
         """
         Insert or update an edge in edges table.
@@ -96,8 +96,8 @@ class EdgeRepository(BaseRepository):
             deputy_a: First deputy ID
             deputy_b: Second deputy ID
             w_signed: Signed weight (can be negative)
-            alpha_deputy_a: Alpha coefficient for deputy_a
-            alpha_deputy_b: Alpha coefficient for deputy_b
+            p_deputy_a: Disparity fraction p_ab from deputy_a perspective
+            p_deputy_b: Disparity fraction p_ab from deputy_b perspective
             
         Returns:
             The inserted/updated edge record
@@ -107,7 +107,7 @@ class EdgeRepository(BaseRepository):
             deputy_a, deputy_b = deputy_b, deputy_a
         
         query = GraphQueries.upsert_edge(self.schema)
-        params = (graph_id, deputy_a, deputy_b, w_signed, w_signed, alpha_deputy_a, alpha_deputy_b)
+        params = (graph_id, deputy_a, deputy_b, w_signed, w_signed, p_deputy_a, p_deputy_b)
         logger.debug(
             "Upserting edge",
             extra={
@@ -118,6 +118,36 @@ class EdgeRepository(BaseRepository):
             }
         )
         return self._execute_query(query, params, fetch_one=True)
+
+    def update_edge_p_values(
+        self,
+        graph_id: int,
+        deputy_a: int,
+        deputy_b: int,
+        p_deputy_a: float,
+        p_deputy_b: float
+    ) -> Optional[Dict[str, Any]]:
+        # Ensure deputy_a < deputy_b
+        if deputy_a > deputy_b:
+            deputy_a, deputy_b = deputy_b, deputy_a
+            p_deputy_a, p_deputy_b = p_deputy_b, p_deputy_a
+
+        query = GraphQueries.update_edge_p_values(self.schema)
+        params = (p_deputy_a, p_deputy_b, graph_id, deputy_a, deputy_b)
+        return self._execute_query(query, params, fetch_one=True)
+
+    def reset_backbone_flags(self, graph_id: int) -> int:
+        query = GraphQueries.reset_backbone_flags(self.schema)
+        return self._execute_update(query, (graph_id,))
+
+    def set_backbone_flags(self, graph_id: int, edge_pairs: List[tuple[int, int]]) -> int:
+        if not edge_pairs:
+            return 0
+
+        deputy_a_list = [pair[0] for pair in edge_pairs]
+        deputy_b_list = [pair[1] for pair in edge_pairs]
+        query = GraphQueries.set_backbone_flags(self.schema)
+        return self._execute_update(query, (deputy_a_list, deputy_b_list, graph_id))
     
     def get_edge(self, graph_id: int, deputy_a: int, deputy_b: int) -> Optional[Dict[str, Any]]:
         # Ensure deputy_a < deputy_b
@@ -141,9 +171,12 @@ class PolarizationMetricRepository(BaseRepository):
     def upsert_polarization_metric(
         self,
         graph_id: int,
+        triads_total: int,
+        three_positive_triads: int,
+        two_positive_triads: int,
+        one_positive_triads: int,
+        zero_positive_triads: int,
         polarization_index: float,
-        triad_count: int,
-        granularity: str
     ) -> Optional[Dict[str, Any]]:
         """
         Insert or update a polarization metric in polarization_metrics table.
@@ -151,32 +184,34 @@ class PolarizationMetricRepository(BaseRepository):
         Args:
             graph_id: Reference to graph table
             polarization_index: Calculated polarization index (0-1)
-            triad_count: Number of triads in the graph
-            granularity: Time granularity ('legislature', 'year', 'month')
             
         Returns:
             The inserted/updated metric record
         """
         query = GraphQueries.upsert_polarization_metric(self.schema)
-        params = (graph_id, polarization_index, triad_count, granularity)
+        params = (
+            graph_id,
+            triads_total,
+            three_positive_triads,
+            two_positive_triads,
+            one_positive_triads,
+            zero_positive_triads,
+            polarization_index
+        )
         logger.debug(
             "Upserting polarization metric",
             extra={
                 "graph_id": graph_id,
                 "polarization_index": polarization_index,
-                "granularity": granularity
+                "triads_total": triads_total
             }
         )
         return self._execute_query(query, params, fetch_one=True)
     
     def get_metric_by_graph(self, graph_id: int) -> Optional[Dict[str, Any]]:
-        query = GraphQueries.get_metric_by_graph(self.schema)
+        query = GraphQueries.get_polarization_metric(self.schema)
         return self._execute_query(query, (graph_id,), fetch_one=True)
     
-    def get_metrics_by_granularity(self, granularity: str) -> List[Dict[str, Any]]:
-        query = GraphQueries.get_metrics_by_granularity(self.schema)
-        return self._execute_query(query, (granularity,), fetch_one=False)
-    
     def get_all_metrics(self) -> List[Dict[str, Any]]:
-        query = GraphQueries.get_all_metrics(self.schema)
+        query = GraphQueries.get_all_polarization_metrics(self.schema)
         return self._execute_query(query, fetch_one=False)

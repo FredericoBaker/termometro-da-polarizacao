@@ -17,6 +17,7 @@ from pipeline.transform.deputies import DeputyTransformer
 from pipeline.transform.votings import VotingTransformer
 from pipeline.transform.rollcalls import RollCallTransformer
 from pipeline.graph.build import BuildGraph
+from pipeline.metrics import BackboneMetrics, PolarizationMetrics
 from termopol_db.repositories import (
     EdgeRepository,
     GraphRepository,
@@ -113,6 +114,18 @@ def run_graph(start_date: datetime, end_date: datetime) -> None:
     )
     BuildGraph().build(start_date, end_date)
     logger.info("Graph step completed")
+
+
+def run_metrics_backbone() -> None:
+    logger.info("Running backbone metrics step")
+    BackboneMetrics().compute_all_graphs_backbone()
+    logger.info("Backbone metrics step completed")
+
+
+def run_metrics_polarization() -> None:
+    logger.info("Running polarization metrics step")
+    PolarizationMetrics().compute_all_graphs_polarization()
+    logger.info("Polarization metrics step completed")
 
 
 def validate_ingest(start_date: datetime, end_date: datetime) -> None:
@@ -250,7 +263,7 @@ def run_step(name: str, fn) -> None:
 
 def parse_steps(steps_arg: Sequence[str]) -> list[str]:
     if "all" in steps_arg:
-        return ["ingest", "transform", "graph"]
+        return ["ingest", "transform", "graph", "metrics_backbone", "metrics_polarization"]
     return list(steps_arg)
 
 def build_parser() -> argparse.ArgumentParser:
@@ -258,7 +271,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--steps",
         nargs="+",
-        choices=["all", "ingest", "transform", "graph"],
+        choices=["all", "ingest", "transform", "graph", "metrics_backbone", "metrics_polarization"],
         default=["all"],
         help="Pipeline steps to run.",
     )
@@ -341,6 +354,12 @@ def main():
                     "validate_graph",
                     lambda: validate_graph(args.max_graphs_validate),
                 )
+
+        if "metrics_backbone" in steps:
+            run_step("metrics_backbone", run_metrics_backbone)
+
+        if "metrics_polarization" in steps:
+            run_step("metrics_polarization", run_metrics_polarization)
 
         logger.info("All selected steps completed successfully")
     except Exception:

@@ -140,8 +140,8 @@ class BuildGraph:
                     deputy_a=d1,
                     deputy_b=d2,
                     w_signed=delta_w,
-                    alpha_deputy_a=None,
-                    alpha_deputy_b=None
+                    p_deputy_a=None,
+                    p_deputy_b=None
                 )
             
             pair_count += 1
