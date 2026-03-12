@@ -24,7 +24,7 @@ class IngestionLogRepository(BaseRepository):
 
     def mark_in_progress(self, log_id: int) -> Optional[Dict[str, Any]]:
         query = IngestionLogQueries.mark_in_progress(self.schema)
-        params = (log_id)
+        params = (log_id,)
         logger.debug(
             "Marking ingestion log as in_progress",
             extra={"log_id": log_id}
@@ -32,12 +32,11 @@ class IngestionLogRepository(BaseRepository):
         return self._execute_query(query, params, fetch_one=True)
 
     def mark_completed(
-        self, 
+        self,
         log_id: int
     ) -> Optional[Dict[str, Any]]:
         query = IngestionLogQueries.mark_completed(self.schema)
-        now = datetime.utcnow()
-        params = (log_id)
+        params = (log_id,)
         logger.debug(
             "Marking ingestion log as completed",
             extra={"log_id": log_id}
@@ -64,6 +63,10 @@ class IngestionLogRepository(BaseRepository):
 
     def get_latest(self) -> Optional[Dict[str, Any]]:
         query = IngestionLogQueries.get_latest_ingestion_log(self.schema)
+        return self._execute_query(query, fetch_one=True)
+
+    def get_last_completed(self) -> Optional[Dict[str, Any]]:
+        query = IngestionLogQueries.get_last_completed(self.schema)
         return self._execute_query(query, fetch_one=True)
 
     def get_all(self) -> List[Dict[str, Any]]:

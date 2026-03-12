@@ -69,6 +69,15 @@ class IngestionLogQueries:
         """
 
     @staticmethod
+    def get_last_completed(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.ingestion_log
+            WHERE status = 'completed'
+            ORDER BY end_logic_ts DESC
+            LIMIT 1;
+        """
+
+    @staticmethod
     def get_all_ingestion_logs(schema: str) -> str:
         return f"""
             SELECT * FROM {schema}.ingestion_log
