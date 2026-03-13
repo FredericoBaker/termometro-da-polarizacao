@@ -1,6 +1,9 @@
+import logging
 from datetime import datetime
 
 from termopol_db.repositories import RawDeputyRepository, NormalizedDeputyRepository
+
+logger = logging.getLogger(__name__)
 
 
 class DeputyTransformer:
@@ -16,6 +19,16 @@ class DeputyTransformer:
             start_date=start_date,
             end_date=end_date
         ):
+            if not deputy.get('name'):
+                logger.warning(
+                    "Skipping normalized deputy upsert with null/empty name",
+                    extra={
+                        "raw_deputy_id": deputy.get('id'),
+                        "party_code": deputy.get('party_code'),
+                        "party_uri": deputy.get('party_uri'),
+                    },
+                )
+                continue
             self.deputy_repo.upsert_deputy(
                 external_id=deputy.get('id'),
                 name=deputy.get('name'),

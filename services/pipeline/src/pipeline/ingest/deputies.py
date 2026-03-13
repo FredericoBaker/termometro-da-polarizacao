@@ -24,11 +24,24 @@ class DeputiesIngestor(BaseIngestor):
         return self.camara_client.get_deputies(start_date, end_date, page=page)
 
     def process_item(self, deputy: Dict[str, Any]) -> None:
+        deputy_id = deputy.get('id')
+        deputy_name = deputy.get('nome')
+        if not deputy_name:
+            logger.warning(
+                "Skipping deputy with null/empty name",
+                extra={
+                    "deputy_id": deputy_id,
+                    "party_code": deputy.get('siglaPartido'),
+                    "party_uri": deputy.get('uriPartido'),
+                },
+            )
+            return
+
         try:
             self.deputy_repo.upsert_deputy({
-                'id': deputy.get('id'),
+                'id': deputy_id,
                 'uri': deputy.get('uri'),
-                'name': deputy.get('nome'),
+                'name': deputy_name,
                 'party_code': deputy.get('siglaPartido'),
                 'party_uri': deputy.get('uriPartido'),
                 'state_code': deputy.get('siglaUf'),
@@ -40,13 +53,13 @@ class DeputiesIngestor(BaseIngestor):
             
             logger.debug(
                 "Deputy processed successfully",
-                extra={"deputy_id": deputy.get('id'), "deputy_name": deputy.get('nome')}
+                extra={"deputy_id": deputy_id, "deputy_name": deputy_name}
             )
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "Failed to process deputy",
-                extra={"deputy_id": deputy.get('id'), "deputy_name": deputy.get('nome')},
+                extra={"deputy_id": deputy_id, "deputy_name": deputy_name},
                 exc_info=True
             )
             raise
