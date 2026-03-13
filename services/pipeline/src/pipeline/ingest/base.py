@@ -1,10 +1,12 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from abc import ABC, abstractmethod
 import requests
 
 from pipeline.client.camara_client import CamaraClient
+from pipeline.config.loader import get
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +19,13 @@ class BaseIngestor(ABC):
         last_ingestion_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         non_fatal_http_status_codes: Optional[set[int]] = None,
+        process_workers: Optional[int] = None,
     ):
         self.camara_client = CamaraClient()
         self.non_fatal_http_status_codes = set(non_fatal_http_status_codes or [])
         self.end_date = end_date
+        configured_workers = int(get("ingest", "process_workers", default=1))
+        self.process_workers = max(1, int(process_workers or configured_workers))
         
         if last_ingestion_date is None:
             self.last_ingestion_date = datetime(datetime.now().year, 1, 1)
@@ -33,6 +38,7 @@ class BaseIngestor(ABC):
                 "last_ingestion_date": self.last_ingestion_date.isoformat(),
                 "end_date": self.end_date.isoformat() if self.end_date else None,
                 "non_fatal_http_status_codes": sorted(self.non_fatal_http_status_codes),
+                "process_workers": self.process_workers,
             }
         )
 
@@ -130,32 +136,56 @@ class BaseIngestor(ABC):
                 )
                 break
 
-            for item in items:
-                try:
-                    self.process_item(item)
-                except requests.exceptions.HTTPError as exc:
-                    status_code = exc.response.status_code if exc.response is not None else None
-                    if self._is_non_fatal_http_error(exc):
-                        logger.warning(
-                            "Skipping item after non-fatal HTTP error",
-                            extra={
-                                "entity": self.get_entity_name(),
-                                "start_date": start_date,
-                                "end_date": end_date,
-                                "page": page,
-                                "status_code": status_code,
-                            },
-                        )
-                        continue
-                    raise
-                items_processed += 1
+            if self.process_workers == 1:
+                for item in items:
+                    try:
+                        self.process_item(item)
+                    except requests.exceptions.HTTPError as exc:
+                        status_code = exc.response.status_code if exc.response is not None else None
+                        if self._is_non_fatal_http_error(exc):
+                            logger.warning(
+                                "Skipping item after non-fatal HTTP error",
+                                extra={
+                                    "entity": self.get_entity_name(),
+                                    "start_date": start_date,
+                                    "end_date": end_date,
+                                    "page": page,
+                                    "status_code": status_code,
+                                },
+                            )
+                            continue
+                        raise
+                    items_processed += 1
+            else:
+                with ThreadPoolExecutor(max_workers=self.process_workers) as executor:
+                    futures = [executor.submit(self.process_item, item) for item in items]
+                    for future in as_completed(futures):
+                        try:
+                            future.result()
+                            items_processed += 1
+                        except requests.exceptions.HTTPError as exc:
+                            status_code = exc.response.status_code if exc.response is not None else None
+                            if self._is_non_fatal_http_error(exc):
+                                logger.warning(
+                                    "Skipping item after non-fatal HTTP error",
+                                    extra={
+                                        "entity": self.get_entity_name(),
+                                        "start_date": start_date,
+                                        "end_date": end_date,
+                                        "page": page,
+                                        "status_code": status_code,
+                                    },
+                                )
+                                continue
+                            raise
 
             logger.debug(
                 f"Completed page for {self.get_entity_name()}",
                 extra={
                     "page": page,
                     "items_on_page": len(items),
-                    "total_so_far": items_processed
+                    "total_so_far": items_processed,
+                    "process_workers": self.process_workers,
                 }
             )
             page += 1

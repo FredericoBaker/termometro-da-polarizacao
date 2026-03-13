@@ -7,3 +7,6 @@ camara_api:
   timeout_seconds: 60
   page_size: 100
   retries: 3
+
+ingest:
+  process_workers: 10
