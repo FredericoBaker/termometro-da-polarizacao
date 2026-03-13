@@ -36,13 +36,28 @@ class VotingsIngestor(BaseIngestor):
 
     def process_item(self, voting: Dict[str, Any]) -> None:
         voting_id = voting.get('id')
+        voting_date = voting.get('data')
+        registration_datetime = voting.get('dataHoraRegistro')
+
+        if not registration_datetime and voting_date:
+            registration_datetime = f"{voting_date}T00:00:00"
+            logger.warning(
+                "Voting missing registration_datetime; using date fallback at midnight",
+                extra={"voting_id": voting_id, "voting_date": voting_date},
+            )
+        elif not registration_datetime and not voting_date:
+            logger.warning(
+                "Skipping voting with missing date and registration_datetime",
+                extra={"voting_id": voting_id},
+            )
+            return
         
         try:
             self.voting_repo.upsert_voting({
                 'id': voting_id,
                 'uri': voting.get('uri'),
-                'date': voting.get('data'),
-                'registration_datetime': voting.get('dataHoraRegistro'),
+                'date': voting_date,
+                'registration_datetime': registration_datetime,
                 'organ_code': voting.get('siglaOrgao'),
                 'organ_uri': voting.get('uriOrgao'),
                 'event_uri': voting.get('uriEvento'),
@@ -55,7 +70,7 @@ class VotingsIngestor(BaseIngestor):
             
             logger.debug(
                 "Voting processed successfully",
-                extra={"voting_id": voting_id, "voting_date": voting.get('data')}
+                extra={"voting_id": voting_id, "voting_date": voting_date}
             )
             
             # Now fetch and process rollcalls for this voting
@@ -64,7 +79,7 @@ class VotingsIngestor(BaseIngestor):
         except Exception as e:
             logger.error(
                 "Failed to process voting",
-                extra={"voting_id": voting_id, "voting_date": voting.get('data')},
+                extra={"voting_id": voting_id, "voting_date": voting_date},
                 exc_info=True
             )
             raise
