@@ -128,6 +128,7 @@ class VotingsIngestor(BaseIngestor):
     def _process_rollcall(self, voting_id: int, rollcall: Dict[str, Any]) -> None:
         deputy_info = rollcall.get('deputado_')
         deputy_id = deputy_info.get('id') if isinstance(deputy_info, dict) else None
+        vote = rollcall.get('tipoVoto')
 
         try:
             if not isinstance(deputy_info, dict) or deputy_id is None:
@@ -137,10 +138,17 @@ class VotingsIngestor(BaseIngestor):
                 )
                 return
 
+            if vote is None or (isinstance(vote, str) and not vote.strip()):
+                logger.warning(
+                    "Skipping rollcall with null/empty vote",
+                    extra={"voting_id": voting_id, "deputy_id": deputy_id},
+                )
+                return
+
             self.rollcall_repo.upsert_rollcall({
                 'voting_id': voting_id,
                 'voting_datetime': rollcall.get('dataRegistroVoto'),
-                'vote': rollcall.get('tipoVoto'),
+                'vote': vote,
                 'deputy_id': deputy_info.get('id'),
                 'deputy_uri': deputy_info.get('uri'),
                 'deputy_name': deputy_info.get('nome'),
@@ -154,7 +162,7 @@ class VotingsIngestor(BaseIngestor):
             
             logger.debug(
                 "Rollcall processed successfully",
-                extra={"voting_id": voting_id, "deputy_id": deputy_id, "vote": rollcall.get('tipoVoto')}
+                extra={"voting_id": voting_id, "deputy_id": deputy_id, "vote": vote}
             )
             
         except Exception:
