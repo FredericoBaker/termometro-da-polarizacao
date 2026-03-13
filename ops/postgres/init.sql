@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_deputies (
     uri TEXT NOT NULL,
     name TEXT NOT NULL,
     party_code TEXT NOT NULL,
-    party_uri TEXT NOT NULL,
+    party_uri TEXT,
     state_code TEXT NOT NULL,
     legislature_id INTEGER NOT NULL,
     photo_url TEXT,
