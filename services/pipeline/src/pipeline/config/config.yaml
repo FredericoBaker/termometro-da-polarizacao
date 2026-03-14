@@ -9,4 +9,4 @@ camara_api:
   retries: 3
 
 ingest:
-  process_workers: 10
+  process_workers: 16
