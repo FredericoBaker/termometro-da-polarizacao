@@ -29,7 +29,7 @@ class DatabaseConnectionPool:
         try:
             self._pool = psycopg2.pool.SimpleConnectionPool(
                 minconn=1,
-                maxconn=10,
+                maxconn=30,
                 **db_config
             )
             logger.info(
