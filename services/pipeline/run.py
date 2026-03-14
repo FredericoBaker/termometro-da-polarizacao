@@ -271,7 +271,9 @@ def main() -> None:
     try:
         run_step("ingest", lambda: run_ingest(start_date, end_date))
         run_step("transform", lambda: run_transform(start_date, end_date))
-        run_step("graph", lambda: run_graph(start_date, end_date))
+
+        graph_end_date = current_utc_naive()
+        run_step("graph", lambda: run_graph(start_date, graph_end_date))
         run_step("metrics_backbone", run_metrics_backbone)
         run_step("metrics_polarization", run_metrics_polarization)
 
