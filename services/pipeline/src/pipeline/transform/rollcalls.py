@@ -25,10 +25,7 @@ class RollCallTransformer:
 
             Important: Deputies, votings and parties must be transformed before rollcalls.
         """
-        for rollcall in self.raw_rollcall_repo.get_rollcalls_by_date_range_generator(
-            start_date=start_date,
-            end_date=end_date
-        ):
+        for rollcall in self.raw_rollcall_repo.get_dirty_rollcalls_generator():
             transformed_rollcall = self._transform_rollcall(rollcall)
             if transformed_rollcall:
                 self.rollcall_repo.upsert_rollcall(
@@ -38,6 +35,7 @@ class RollCallTransformer:
                     deputy_id = transformed_rollcall.get('deputy_id'),
                     legislature_term_id = transformed_rollcall.get('legislature_term_id')
                 )
+                self.raw_rollcall_repo.clear_rollcall_dirty(rollcall.get('id'))
 
     def _transform_rollcall(self, raw_rollcall: dict) -> Optional[dict]:
         """

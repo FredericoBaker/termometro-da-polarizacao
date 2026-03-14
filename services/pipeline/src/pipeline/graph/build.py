@@ -153,7 +153,9 @@ class BuildGraph:
         
         # 4. Mark voting as processed for these graphs
         for graph in graphs_to_update:
-            self.graph_repo.upsert_graph_voting(graph.get('id'), voting_id)
+            graph_id = graph.get('id')
+            self.graph_repo.upsert_graph_voting(graph_id, voting_id)
+            self.graph_repo.mark_graph_metrics_dirty(graph_id)
 
     def _get_legislature(self, date: datetime) -> Optional[int]:
         """

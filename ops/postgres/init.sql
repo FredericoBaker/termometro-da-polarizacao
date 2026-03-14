@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_parties (
     party_code TEXT NOT NULL,
     name TEXT NOT NULL,
     uri TEXT NOT NULL,
+    transform_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     payload JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_deputies (
     legislature_id INTEGER NOT NULL,
     photo_url TEXT,
     email TEXT,
+    transform_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     payload JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -47,6 +49,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_votings (
     proposition_subject_uri TEXT,
     description TEXT,
     approval BOOLEAN,
+    transform_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     payload JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -65,6 +68,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_rollcalls (
     deputy_state_code TEXT NOT NULL,
     deputy_legislature_id INTEGER NOT NULL,
     deputy_photo_url TEXT,
+    transform_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     payload JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -137,6 +141,7 @@ CREATE TABLE IF NOT EXISTS termopol.graphs (
     legislature INTEGER,
     year INTEGER,
     month DATE, -- First day of month
+    metrics_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (time_granularity_id, legislature, year, month),
@@ -184,6 +189,18 @@ CREATE TABLE IF NOT EXISTS termopol.graph_votings (
 
 CREATE INDEX IF NOT EXISTS idx_raw_votings_date
   ON termopol.raw_votings (date);
+
+CREATE INDEX IF NOT EXISTS idx_raw_parties_transform_dirty
+  ON termopol.raw_parties (transform_dirty);
+
+CREATE INDEX IF NOT EXISTS idx_raw_deputies_transform_dirty
+  ON termopol.raw_deputies (transform_dirty);
+
+CREATE INDEX IF NOT EXISTS idx_raw_votings_transform_dirty
+  ON termopol.raw_votings (transform_dirty);
+
+CREATE INDEX IF NOT EXISTS idx_raw_rollcalls_transform_dirty
+  ON termopol.raw_rollcalls (transform_dirty);
 
 CREATE INDEX IF NOT EXISTS idx_votings_date
   ON termopol.votings (date);

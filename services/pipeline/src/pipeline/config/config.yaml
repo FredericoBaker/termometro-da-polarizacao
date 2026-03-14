@@ -5,7 +5,7 @@ camara_api:
   votings_endpoint: votacoes
   rollcalls_endpoint: votacoes/{voting_id}/votos
   timeout_seconds: 60
-  page_size: 100
+  page_size: 500
   retries: 3
 
 ingest:

@@ -12,13 +12,11 @@ class PartyTransformer:
         """
             Transforms all newly ingested party data and upserts into normalized parties table.
         """
-        for party in self.raw_party_repo.get_parties_by_date_range_generator(
-            start_date=start_date,
-            end_date=end_date
-        ):
+        for party in self.raw_party_repo.get_dirty_parties_generator():
             self.party_repo.upsert_party(
                 external_id=party.get('id'),
                 party_code=party.get('party_code'),
                 name=party.get('name'),
                 uri=party.get('uri')
             )
+            self.raw_party_repo.clear_party_dirty(party.get('id'))

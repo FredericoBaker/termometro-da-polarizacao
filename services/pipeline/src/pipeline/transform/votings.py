@@ -15,10 +15,7 @@ class VotingTransformer:
         """
             Transforms all newly ingested voting data and upserts into normalized votings table.
         """
-        for voting in self.raw_voting_repo.get_votings_by_date_range_generator(
-            start_date=start_date,
-            end_date=end_date
-        ):
+        for voting in self.raw_voting_repo.get_dirty_votings_generator():
             registration_datetime = voting.get('registration_datetime')
             voting_date = voting.get('date')
             if not registration_datetime and voting_date:
@@ -32,6 +29,7 @@ class VotingTransformer:
                     "Skipping normalized voting upsert with missing date and registration_datetime",
                     extra={"external_voting_id": voting.get('id')},
                 )
+                self.raw_voting_repo.clear_voting_dirty(voting.get('id'))
                 continue
 
             self.voting_repo.upsert_voting(
@@ -40,3 +38,4 @@ class VotingTransformer:
                 registration_datetime=registration_datetime,
                 approval=voting.get('approval')
             )
+            self.raw_voting_repo.clear_voting_dirty(voting.get('id'))

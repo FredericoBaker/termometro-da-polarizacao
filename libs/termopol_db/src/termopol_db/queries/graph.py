@@ -34,6 +34,34 @@ class GraphQueries:
     @staticmethod
     def get_all_graphs(schema: str) -> str:
         return f"SELECT * FROM {schema}.graphs ORDER BY legislature DESC, year DESC, month DESC"
+
+    @staticmethod
+    def get_dirty_graphs(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.graphs
+            WHERE metrics_dirty = TRUE
+            ORDER BY legislature DESC, year DESC, month DESC
+        """
+
+    @staticmethod
+    def mark_graph_metrics_dirty(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.graphs
+            SET metrics_dirty = TRUE,
+                updated_at = now()
+            WHERE id = %s
+            RETURNING *;
+        """
+
+    @staticmethod
+    def clear_graph_metrics_dirty(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.graphs
+            SET metrics_dirty = FALSE,
+                updated_at = now()
+            WHERE id = %s
+            RETURNING *;
+        """
     
     # ===================== EDGES =====================
     

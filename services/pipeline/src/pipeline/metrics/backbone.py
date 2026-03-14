@@ -34,7 +34,7 @@ class BackboneMetrics:
         self.max_alpha_iterations = max_alpha_iterations
 
     def compute_all_graphs_backbone(self) -> Dict[str, int]:
-        graphs = self.graph_repo.get_all_graphs()
+        graphs = self.graph_repo.get_dirty_graphs()
         updated_edges_total = 0
         backbone_edges_total = 0
 

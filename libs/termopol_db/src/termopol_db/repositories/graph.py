@@ -61,6 +61,18 @@ class GraphRepository(BaseRepository):
     def get_all_graphs(self) -> List[Dict[str, Any]]:
         query = GraphQueries.get_all_graphs(self.schema)
         return self._execute_query(query, fetch_one=False)
+
+    def get_dirty_graphs(self) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_dirty_graphs(self.schema)
+        return self._execute_query(query, fetch_one=False)
+
+    def mark_graph_metrics_dirty(self, graph_id: int) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.mark_graph_metrics_dirty(self.schema)
+        return self._execute_query(query, (graph_id,), fetch_one=True)
+
+    def clear_graph_metrics_dirty(self, graph_id: int) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.clear_graph_metrics_dirty(self.schema)
+        return self._execute_query(query, (graph_id,), fetch_one=True)
     
     def upsert_graph_voting(self, graph_id: int, voting_id: int) -> Optional[Dict[str, Any]]:
         """

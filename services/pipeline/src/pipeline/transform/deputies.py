@@ -15,10 +15,7 @@ class DeputyTransformer:
         """
             Transforms all newly ingested deputy data and upserts into normalized deputies table.
         """
-        for deputy in self.raw_deputy_repo.get_deputies_by_date_range_generator(
-            start_date=start_date,
-            end_date=end_date
-        ):
+        for deputy in self.raw_deputy_repo.get_dirty_deputies_generator():
             if not deputy.get('name'):
                 logger.warning(
                     "Skipping normalized deputy upsert with null/empty name",
@@ -28,9 +25,11 @@ class DeputyTransformer:
                         "party_uri": deputy.get('party_uri'),
                     },
                 )
+                self.raw_deputy_repo.clear_deputy_dirty(deputy.get('id'))
                 continue
             self.deputy_repo.upsert_deputy(
                 external_id=deputy.get('id'),
                 name=deputy.get('name'),
                 state_code=deputy.get('state_code')
             )
+            self.raw_deputy_repo.clear_deputy_dirty(deputy.get('id'))

@@ -49,6 +49,17 @@ class RawPartyRepository(BaseRepository):
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
 
+    def get_dirty_parties_generator(self, batch_size: int = 1000) -> Generator[Dict[str, Any], None, None]:
+        query = RawQueries.get_dirty_parties(self.schema)
+        for result in self._execute_query_generator(query, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
+
+    def clear_party_dirty(self, party_id: int) -> Optional[Dict[str, Any]]:
+        query = RawQueries.clear_party_dirty(self.schema)
+        return self._execute_query(query, (party_id,), fetch_one=True)
+
     def get_parties_by_date_range(
         self,
         start_date: datetime,
@@ -143,6 +154,17 @@ class RawDeputyRepository(BaseRepository):
             if 'payload' in result:
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
+
+    def get_dirty_deputies_generator(self, batch_size: int = 1000) -> Generator[Dict[str, Any], None, None]:
+        query = RawQueries.get_dirty_deputies(self.schema)
+        for result in self._execute_query_generator(query, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
+
+    def clear_deputy_dirty(self, deputy_id: int) -> Optional[Dict[str, Any]]:
+        query = RawQueries.clear_deputy_dirty(self.schema)
+        return self._execute_query(query, (deputy_id,), fetch_one=True)
 
     def get_deputies_by_date_range(
         self,
@@ -253,6 +275,17 @@ class RawVotingRepository(BaseRepository):
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
 
+    def get_dirty_votings_generator(self, batch_size: int = 1000) -> Generator[Dict[str, Any], None, None]:
+        query = RawQueries.get_dirty_votings(self.schema)
+        for result in self._execute_query_generator(query, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
+
+    def clear_voting_dirty(self, voting_id: str) -> Optional[Dict[str, Any]]:
+        query = RawQueries.clear_voting_dirty(self.schema)
+        return self._execute_query(query, (voting_id,), fetch_one=True)
+
     def get_votings_by_date_range(
         self,
         start_date: datetime,
@@ -351,6 +384,17 @@ class RawRollcallRepository(BaseRepository):
             if 'payload' in result:
                 result['payload'] = self._deserialize_json(result['payload'])
         return results
+
+    def get_dirty_rollcalls_generator(self, batch_size: int = 1000) -> Generator[Dict[str, Any], None, None]:
+        query = RawQueries.get_dirty_rollcalls(self.schema)
+        for result in self._execute_query_generator(query, batch_size=batch_size):
+            if 'payload' in result:
+                result['payload'] = self._deserialize_json(result['payload'])
+            yield result
+
+    def clear_rollcall_dirty(self, raw_rollcall_id: int) -> Optional[Dict[str, Any]]:
+        query = RawQueries.clear_rollcall_dirty(self.schema)
+        return self._execute_query(query, (raw_rollcall_id,), fetch_one=True)
 
     def get_rollcalls_by_date_range(
         self,

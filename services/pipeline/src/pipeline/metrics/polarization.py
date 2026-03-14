@@ -30,11 +30,14 @@ class PolarizationMetrics:
         self.metric_repo = PolarizationMetricRepository()
 
     def compute_all_graphs_polarization(self) -> Dict[str, int]:
-        graphs = self.graph_repo.get_all_graphs()
+        graphs = self.graph_repo.get_dirty_graphs()
         processed_graphs = 0
 
         for graph in graphs:
-            self.compute_graph_polarization(graph["id"])
+            graph_id = graph["id"]
+            self.compute_graph_polarization(graph_id)
+            # Mark graph as clean only after polarization succeeds.
+            self.graph_repo.clear_graph_metrics_dirty(graph_id)
             processed_graphs += 1
 
         logger.info(
