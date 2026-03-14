@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS termopol.raw_rollcalls (
     deputy_name TEXT NOT NULL,
     deputy_party_code TEXT NOT NULL,
     deputy_party_uri TEXT NOT NULL,
-    deputy_state_code TEXT NOT NULL,
+    deputy_state_code TEXT,
     deputy_legislature_id INTEGER NOT NULL,
     deputy_photo_url TEXT,
     transform_dirty BOOLEAN NOT NULL DEFAULT TRUE,
