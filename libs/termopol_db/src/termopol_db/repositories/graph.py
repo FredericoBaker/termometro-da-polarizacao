@@ -177,6 +177,15 @@ class EdgeRepository(BaseRepository):
         query = GraphQueries.delete_edges_by_graph(self.schema)
         return self._execute_update(query, (graph_id,))
 
+    def upsert_node(self, graph_id: int, deputy_id: int, x: float, y: float) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.upsert_node(self.schema)
+        params = (graph_id, deputy_id, x, y)
+        return self._execute_query(query, params, fetch_one=True)
+
+    def get_nodes(self, graph_id: int) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_nodes(self.schema)
+        return self._execute_query(query, (graph_id,), fetch_one=False)
+
 
 class PolarizationMetricRepository(BaseRepository):
     

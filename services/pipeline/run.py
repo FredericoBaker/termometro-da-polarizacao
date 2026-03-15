@@ -35,7 +35,7 @@ sys.path.insert(0, str(_REPO_ROOT / "libs/termopol_db/src"))
 
 from pipeline.graph.build import BuildGraph
 from pipeline.ingest import DeputiesIngestor, PartiesIngestor, VotingsIngestor
-from pipeline.metrics import BackboneMetrics, PolarizationMetrics
+from pipeline.metrics import MetricsRunner
 from pipeline.transform.deputies import DeputyTransformer
 from pipeline.transform.parties import PartyTransformer
 from pipeline.transform.rollcalls import RollCallTransformer
@@ -167,17 +167,10 @@ def run_graph(start_date: datetime, end_date: datetime) -> None:
     logger.info("Graph step completed")
 
 
-def run_metrics_backbone() -> None:
-    logger.info("Running backbone metrics step")
-    BackboneMetrics().compute_all_graphs_backbone()
-    logger.info("Backbone metrics step completed")
-
-
-def run_metrics_polarization() -> None:
-    logger.info("Running polarization metrics step")
-    PolarizationMetrics().compute_all_graphs_polarization()
-    logger.info("Polarization metrics step completed")
-
+def run_metrics() -> None:
+    logger.info("Running all graph metrics (Backbone, Polarization, Layout)")
+    MetricsRunner().run_all()
+    logger.info("All graph metrics completed")
 
 def run_step(name: str, fn) -> None:
     started_at = time.time()
@@ -274,8 +267,7 @@ def main() -> None:
 
         graph_end_date = current_utc_naive()
         run_step("graph", lambda: run_graph(start_date, graph_end_date))
-        run_step("metrics_backbone", run_metrics_backbone)
-        run_step("metrics_polarization", run_metrics_polarization)
+        run_step("metrics", run_metrics)
 
         log_repo.mark_completed(log_id)
         logger.info(

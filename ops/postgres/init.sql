@@ -167,6 +167,16 @@ CREATE TABLE IF NOT EXISTS termopol.edges (
     CHECK (deputy_a < deputy_b)
 );
 
+CREATE TABLE IF NOT EXISTS termopol.nodes (
+    graph_id INTEGER NOT NULL REFERENCES termopol.graphs(id),
+    deputy_id INTEGER NOT NULL REFERENCES termopol.deputies(id),
+    x DOUBLE PRECISION,
+    y DOUBLE PRECISION,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (graph_id, deputy_id)
+);
+
 CREATE TABLE IF NOT EXISTS termopol.polarization_metrics (
     graph_id INTEGER NOT NULL REFERENCES termopol.graphs(id),
     triads_total BIGINT NOT NULL,
@@ -240,5 +250,6 @@ CREATE TRIGGER update_rollcalls_modtime BEFORE UPDATE ON termopol.rollcalls FOR 
 
 -- Triggers for Analytics/Graph Tables
 CREATE TRIGGER update_graph_modtime BEFORE UPDATE ON termopol.graphs FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
+CREATE TRIGGER update_nodes_modtime BEFORE UPDATE ON termopol.nodes FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
 CREATE TRIGGER update_edges_modtime BEFORE UPDATE ON termopol.edges FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();
 CREATE TRIGGER update_polarization_metrics_modtime BEFORE UPDATE ON termopol.polarization_metrics FOR EACH ROW EXECUTE FUNCTION termopol.update_updated_at_column();

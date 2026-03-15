@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Tuple
 import networkx as nx
 
-from termopol_db.repositories import EdgeRepository, GraphRepository
+from termopol_db.repositories import EdgeRepository
 
 logger = logging.getLogger(__name__)
 
@@ -25,37 +25,12 @@ class BackboneMetrics:
         alpha_tolerance: float = 1e-3,
         max_alpha_iterations: int = 25,
     ):
-        self.graph_repo = GraphRepository()
         self.edge_repo = EdgeRepository()
         self.target_lcc_ratio = target_lcc_ratio
         self.alpha_min = alpha_min
         self.alpha_max = alpha_max
         self.alpha_tolerance = alpha_tolerance
         self.max_alpha_iterations = max_alpha_iterations
-
-    def compute_all_graphs_backbone(self) -> Dict[str, int]:
-        graphs = self.graph_repo.get_dirty_graphs()
-        updated_edges_total = 0
-        backbone_edges_total = 0
-
-        for graph in graphs:
-            result = self.compute_graph_backbone(graph["id"])
-            updated_edges_total += result["updated_p_values"]
-            backbone_edges_total += result["backbone_edges"]
-
-        logger.info(
-            "Finished backbone computation for all graphs",
-            extra={
-                "graph_count": len(graphs),
-                "updated_edges_total": updated_edges_total,
-                "backbone_edges_total": backbone_edges_total,
-            },
-        )
-        return {
-            "graph_count": len(graphs),
-            "updated_edges_total": updated_edges_total,
-            "backbone_edges_total": backbone_edges_total,
-        }
 
     def compute_graph_backbone(self, graph_id: int) -> Dict[str, Any]:
         updated_p_values = self.compute_graph_p_values(graph_id)

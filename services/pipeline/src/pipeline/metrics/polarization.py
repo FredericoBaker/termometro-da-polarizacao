@@ -25,26 +25,8 @@ class PolarizationMetrics:
     POLARIZATION_REFERENCE_SHARE = 0.75
 
     def __init__(self):
-        self.graph_repo = GraphRepository()
         self.edge_repo = EdgeRepository()
         self.metric_repo = PolarizationMetricRepository()
-
-    def compute_all_graphs_polarization(self) -> Dict[str, int]:
-        graphs = self.graph_repo.get_dirty_graphs()
-        processed_graphs = 0
-
-        for graph in graphs:
-            graph_id = graph["id"]
-            self.compute_graph_polarization(graph_id)
-            # Mark graph as clean only after polarization succeeds.
-            self.graph_repo.clear_graph_metrics_dirty(graph_id)
-            processed_graphs += 1
-
-        logger.info(
-            "Finished polarization metrics for all graphs",
-            extra={"graph_count": processed_graphs},
-        )
-        return {"graph_count": processed_graphs}
 
     def compute_graph_polarization(self, graph_id: int) -> Dict[str, float]:
         edges = self.edge_repo.get_edges_by_graph(graph_id)

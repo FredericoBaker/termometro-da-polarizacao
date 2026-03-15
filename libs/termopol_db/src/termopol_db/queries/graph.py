@@ -63,6 +63,28 @@ class GraphQueries:
             RETURNING *;
         """
     
+    # ===================== GRAPH NODES =====================
+    
+    @staticmethod
+    def upsert_node(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.nodes 
+            (graph_id, deputy_id, x, y)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (graph_id, deputy_id) DO UPDATE
+            SET x = EXCLUDED.x,
+                y = EXCLUDED.y,
+                updated_at = now()
+            RETURNING *;
+        """
+
+    @staticmethod
+    def get_nodes(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.nodes
+            WHERE graph_id = %s
+        """
+
     # ===================== EDGES =====================
     
     @staticmethod
