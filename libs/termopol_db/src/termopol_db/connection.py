@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseConnectionPool:    
     _instance: Optional['DatabaseConnectionPool'] = None
-    _pool: Optional[pool.SimpleConnectionPool] = None
+    _pool: Optional[pool.ThreadedConnectionPool] = None
     
     def __new__(cls) -> 'DatabaseConnectionPool':
         if cls._instance is None:
@@ -27,7 +27,7 @@ class DatabaseConnectionPool:
         db_config = get_db_config()
         
         try:
-            self._pool = psycopg2.pool.SimpleConnectionPool(
+            self._pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
                 maxconn=30,
                 **db_config
@@ -50,10 +50,11 @@ class DatabaseConnectionPool:
         try:
             conn = self._pool.getconn()
             yield conn
-            conn.commit()
+            if conn and not conn.closed:
+                conn.commit()
 
-        except psycopg2.DatabaseError as e:
-            if conn:
+        except psycopg2.DatabaseError:
+            if conn and not conn.closed:
                 conn.rollback()
             logger.error(
                 "Database error during transaction",
@@ -63,7 +64,17 @@ class DatabaseConnectionPool:
 
         finally:
             if conn:
-                self._pool.putconn(conn)
+                try:
+                    if conn.closed:
+                        self._pool.putconn(conn, close=True)
+                    else:
+                        self._pool.putconn(conn)
+                except pool.PoolError:
+                    logger.warning(
+                        "Failed to return connection to pool",
+                        extra={"conn_closed": bool(conn.closed)},
+                        exc_info=True
+                    )
     
     def close_all_connections(self):
         if self._pool:
