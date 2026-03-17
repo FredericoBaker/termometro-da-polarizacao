@@ -34,6 +34,10 @@ class NormalizedPartyRepository(BaseRepository):
     def get_party_by_external_id(self, external_id: int) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_party_by_external_id(self.schema)
         return self._execute_query(query, (external_id,), fetch_one=True)
+
+    def get_party_by_id(self, party_id: int) -> Optional[Dict[str, Any]]:
+        query = NormalizedQueries.get_party_by_id(self.schema)
+        return self._execute_query(query, (party_id,), fetch_one=True)
     
     def get_party_by_code(self, party_code: str) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_party_by_code(self.schema)
@@ -109,6 +113,16 @@ class NormalizedDeputyRepository(BaseRepository):
     def get_deputy_by_external_id(self, external_id: int) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_deputy_by_external_id(self.schema)
         return self._execute_query(query, (external_id,), fetch_one=True)
+
+    def get_deputy_by_id(self, deputy_id: int) -> Optional[Dict[str, Any]]:
+        query = NormalizedQueries.get_deputy_by_id(self.schema)
+        return self._execute_query(query, (deputy_id,), fetch_one=True)
+
+    def get_deputies_by_ids(self, deputy_ids: List[int]) -> List[Dict[str, Any]]:
+        if not deputy_ids:
+            return []
+        query = NormalizedQueries.get_deputies_by_ids(self.schema)
+        return self._execute_query(query, (deputy_ids,), fetch_one=False)
     
     def get_all_deputies(self) -> List[Dict[str, Any]]:
         query = NormalizedQueries.get_all_deputies(self.schema)
@@ -196,6 +210,27 @@ class NormalizedDeputyRepository(BaseRepository):
         """Get all legislature terms for a deputy."""
         query = NormalizedQueries.get_terms_by_deputy(self.schema)
         return self._execute_query(query, (deputy_id,), fetch_one=False)
+
+    def get_latest_term_with_party_by_deputy(self, deputy_id: int) -> Optional[Dict[str, Any]]:
+        """Get latest legislature term and party info for a deputy."""
+        query = NormalizedQueries.get_latest_term_with_party_by_deputy(self.schema)
+        return self._execute_query(query, (deputy_id,), fetch_one=True)
+
+    def get_latest_terms_with_party_by_deputies(self, deputy_ids: List[int]) -> List[Dict[str, Any]]:
+        if not deputy_ids:
+            return []
+        query = NormalizedQueries.get_latest_terms_with_party_by_deputies(self.schema)
+        return self._execute_query(query, (deputy_ids,), fetch_one=False)
+
+    def get_terms_with_party_by_deputies_and_legislature(
+        self,
+        deputy_ids: List[int],
+        legislature: int,
+    ) -> List[Dict[str, Any]]:
+        if not deputy_ids:
+            return []
+        query = NormalizedQueries.get_terms_with_party_by_deputies_and_legislature(self.schema)
+        return self._execute_query(query, (deputy_ids, legislature), fetch_one=False)
 
 
 class NormalizedVotingRepository(BaseRepository):

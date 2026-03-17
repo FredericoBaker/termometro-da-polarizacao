@@ -19,6 +19,10 @@ class NormalizedQueries:
     @staticmethod
     def get_party_by_external_id(schema: str) -> str:
         return f"SELECT * FROM {schema}.parties WHERE external_id = %s"
+
+    @staticmethod
+    def get_party_by_id(schema: str) -> str:
+        return f"SELECT * FROM {schema}.parties WHERE id = %s"
     
     @staticmethod
     def get_party_by_code(schema: str) -> str:
@@ -42,8 +46,20 @@ class NormalizedQueries:
         """
     
     @staticmethod
+    def get_deputy_by_id(schema: str) -> str:
+        return f"SELECT * FROM {schema}.deputies WHERE id = %s"
+
+    @staticmethod
     def get_deputy_by_external_id(schema: str) -> str:
         return f"SELECT * FROM {schema}.deputies WHERE external_id = %s"
+
+    @staticmethod
+    def get_deputies_by_ids(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.deputies
+            WHERE id = ANY(%s::INTEGER[])
+            ORDER BY id
+        """
     
     @staticmethod
     def get_all_deputies(schema: str) -> str:
@@ -79,6 +95,63 @@ class NormalizedQueries:
             SELECT * FROM {schema}.deputies_legislature_terms 
             WHERE deputy_id = %s
             ORDER BY legislature_id DESC
+        """
+
+    @staticmethod
+    def get_latest_term_with_party_by_deputy(schema: str) -> str:
+        return f"""
+            SELECT
+                t.id,
+                t.deputy_id,
+                t.legislature_id,
+                t.party_id,
+                t.created_at,
+                t.updated_at,
+                p.external_id AS party_external_id,
+                p.party_code,
+                p.name AS party_name,
+                p.uri AS party_uri
+            FROM {schema}.deputies_legislature_terms t
+            LEFT JOIN {schema}.parties p ON p.id = t.party_id
+            WHERE t.deputy_id = %s
+            ORDER BY t.legislature_id DESC, t.updated_at DESC
+            LIMIT 1
+        """
+
+    @staticmethod
+    def get_latest_terms_with_party_by_deputies(schema: str) -> str:
+        return f"""
+            SELECT DISTINCT ON (t.deputy_id)
+                t.id,
+                t.deputy_id,
+                t.legislature_id,
+                t.party_id,
+                p.external_id AS party_external_id,
+                p.party_code,
+                p.name AS party_name,
+                p.uri AS party_uri
+            FROM {schema}.deputies_legislature_terms t
+            LEFT JOIN {schema}.parties p ON p.id = t.party_id
+            WHERE t.deputy_id = ANY(%s::INTEGER[])
+            ORDER BY t.deputy_id, t.legislature_id DESC, t.updated_at DESC
+        """
+
+    @staticmethod
+    def get_terms_with_party_by_deputies_and_legislature(schema: str) -> str:
+        return f"""
+            SELECT
+                t.id,
+                t.deputy_id,
+                t.legislature_id,
+                t.party_id,
+                p.external_id AS party_external_id,
+                p.party_code,
+                p.name AS party_name,
+                p.uri AS party_uri
+            FROM {schema}.deputies_legislature_terms t
+            LEFT JOIN {schema}.parties p ON p.id = t.party_id
+            WHERE t.deputy_id = ANY(%s::INTEGER[])
+              AND t.legislature_id = %s
         """
     
     # ===================== VOTINGS =====================

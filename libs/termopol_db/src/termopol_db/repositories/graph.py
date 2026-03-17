@@ -62,6 +62,10 @@ class GraphRepository(BaseRepository):
         query = GraphQueries.get_all_graphs(self.schema)
         return self._execute_query(query, fetch_one=False)
 
+    def get_graphs_by_deputy(self, deputy_id: int) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_graphs_by_deputy(self.schema)
+        return self._execute_query(query, (deputy_id, deputy_id), fetch_one=False)
+
     def get_dirty_graphs(self) -> List[Dict[str, Any]]:
         query = GraphQueries.get_dirty_graphs(self.schema)
         return self._execute_query(query, fetch_one=False)
@@ -86,6 +90,27 @@ class GraphRepository(BaseRepository):
         """Check if a voting has been processed for a specific graph."""
         query = GraphQueries.get_graph_voting(self.schema)
         return self._execute_query(query, (graph_id, voting_id), fetch_one=True)
+
+    def get_graph_voting_counts_by_graph_ids(self, graph_ids: List[int]) -> List[Dict[str, Any]]:
+        if not graph_ids:
+            return []
+        query = GraphQueries.get_graph_voting_counts_by_graph_ids(self.schema)
+        return self._execute_query(query, (graph_ids,), fetch_one=False)
+
+    def upsert_node(self, graph_id: int, deputy_id: int, x: float, y: float) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.upsert_node(self.schema)
+        params = (graph_id, deputy_id, x, y)
+        return self._execute_query(query, params, fetch_one=True)
+
+    def get_nodes(self, graph_id: int) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_nodes(self.schema)
+        return self._execute_query(query, (graph_id,), fetch_one=False)
+
+    def get_nodes_by_deputies(self, graph_id: int, deputy_ids: List[int]) -> List[Dict[str, Any]]:
+        if not deputy_ids:
+            return []
+        query = GraphQueries.get_nodes_by_deputies(self.schema)
+        return self._execute_query(query, (graph_id, deputy_ids), fetch_one=False)
 
 
 class EdgeRepository(BaseRepository):
@@ -172,20 +197,26 @@ class EdgeRepository(BaseRepository):
     def get_edges_by_graph(self, graph_id: int) -> List[Dict[str, Any]]:
         query = GraphQueries.get_edges_by_graph(self.schema)
         return self._execute_query(query, (graph_id,), fetch_one=False)
+        
+    def get_backbone_edges_by_graph(self, graph_id: int) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_backbone_edges_by_graph(self.schema)
+        return self._execute_query(query, (graph_id,), fetch_one=False)
+
+    def get_backbone_edges_by_deputy(self, graph_id: int, deputy_id: int) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_backbone_edges_by_deputy(self.schema)
+        return self._execute_query(query, (graph_id, deputy_id, deputy_id), fetch_one=False)
+
+    def get_top_agreement_edges_by_graph(self, graph_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_top_agreement_edges_by_graph(self.schema)
+        return self._execute_query(query, (graph_id, limit), fetch_one=False)
+
+    def get_top_disagreement_edges_by_graph(self, graph_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+        query = GraphQueries.get_top_disagreement_edges_by_graph(self.schema)
+        return self._execute_query(query, (graph_id, limit), fetch_one=False)
     
     def delete_edges_by_graph(self, graph_id: int) -> int:
         query = GraphQueries.delete_edges_by_graph(self.schema)
         return self._execute_update(query, (graph_id,))
-
-    def upsert_node(self, graph_id: int, deputy_id: int, x: float, y: float) -> Optional[Dict[str, Any]]:
-        query = GraphQueries.upsert_node(self.schema)
-        params = (graph_id, deputy_id, x, y)
-        return self._execute_query(query, params, fetch_one=True)
-
-    def get_nodes(self, graph_id: int) -> List[Dict[str, Any]]:
-        query = GraphQueries.get_nodes(self.schema)
-        return self._execute_query(query, (graph_id,), fetch_one=False)
-
 
 class PolarizationMetricRepository(BaseRepository):
     
@@ -232,6 +263,12 @@ class PolarizationMetricRepository(BaseRepository):
     def get_metric_by_graph(self, graph_id: int) -> Optional[Dict[str, Any]]:
         query = GraphQueries.get_polarization_metric(self.schema)
         return self._execute_query(query, (graph_id,), fetch_one=True)
+
+    def get_metrics_by_graph_ids(self, graph_ids: List[int]) -> List[Dict[str, Any]]:
+        if not graph_ids:
+            return []
+        query = GraphQueries.get_polarization_metrics_by_graph_ids(self.schema)
+        return self._execute_query(query, (graph_ids,), fetch_one=False)
     
     def get_all_metrics(self) -> List[Dict[str, Any]]:
         query = GraphQueries.get_all_polarization_metrics(self.schema)

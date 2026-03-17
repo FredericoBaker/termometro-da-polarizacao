@@ -36,6 +36,21 @@ class GraphQueries:
         return f"SELECT * FROM {schema}.graphs ORDER BY legislature DESC, year DESC, month DESC"
 
     @staticmethod
+    def get_graphs_by_deputy(schema: str) -> str:
+        return f"""
+            SELECT DISTINCT
+                g.id AS graph_id,
+                g.time_granularity_id,
+                g.legislature,
+                g.year,
+                g.month
+            FROM {schema}.edges e
+            INNER JOIN {schema}.graphs g ON g.id = e.graph_id
+            WHERE e.deputy_a = %s OR e.deputy_b = %s
+            ORDER BY g.legislature DESC NULLS LAST, g.year DESC NULLS LAST, g.month DESC NULLS LAST
+        """
+
+    @staticmethod
     def get_dirty_graphs(schema: str) -> str:
         return f"""
             SELECT * FROM {schema}.graphs
@@ -83,6 +98,14 @@ class GraphQueries:
         return f"""
             SELECT * FROM {schema}.nodes
             WHERE graph_id = %s
+        """
+
+    @staticmethod
+    def get_nodes_by_deputies(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.nodes
+            WHERE graph_id = %s
+              AND deputy_id = ANY(%s::INTEGER[])
         """
 
     # ===================== EDGES =====================
@@ -152,6 +175,24 @@ class GraphQueries:
             WHERE graph_id = %s
             ORDER BY deputy_a, deputy_b
         """
+        
+    @staticmethod
+    def get_backbone_edges_by_graph(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges 
+            WHERE graph_id = %s AND is_backbone = TRUE
+            ORDER BY deputy_a, deputy_b
+        """
+
+    @staticmethod
+    def get_backbone_edges_by_deputy(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges
+            WHERE graph_id = %s
+              AND is_backbone = TRUE
+              AND (deputy_a = %s OR deputy_b = %s)
+            ORDER BY deputy_a, deputy_b
+        """
     
     @staticmethod
     def get_edges_by_deputy(schema: str) -> str:
@@ -159,6 +200,24 @@ class GraphQueries:
             SELECT * FROM {schema}.edges 
             WHERE graph_id = %s AND (deputy_a = %s OR deputy_b = %s)
             ORDER BY deputy_a, deputy_b
+        """
+
+    @staticmethod
+    def get_top_agreement_edges_by_graph(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges
+            WHERE graph_id = %s
+            ORDER BY w_signed DESC, abs_w DESC
+            LIMIT %s
+        """
+
+    @staticmethod
+    def get_top_disagreement_edges_by_graph(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.edges
+            WHERE graph_id = %s
+            ORDER BY w_signed ASC, abs_w DESC
+            LIMIT %s
         """
     
     @staticmethod
@@ -181,6 +240,15 @@ class GraphQueries:
         return f"""
             SELECT * FROM {schema}.graph_votings 
             WHERE graph_id = %s AND voting_id = %s
+        """
+
+    @staticmethod
+    def get_graph_voting_counts_by_graph_ids(schema: str) -> str:
+        return f"""
+            SELECT graph_id, COUNT(*)::INTEGER AS voting_count
+            FROM {schema}.graph_votings
+            WHERE graph_id = ANY(%s::INTEGER[])
+            GROUP BY graph_id
         """
 
     # ===================== POLARIZATION METRICS =====================
@@ -208,6 +276,13 @@ class GraphQueries:
         return f"""
             SELECT * FROM {schema}.polarization_metrics 
             WHERE graph_id = %s
+        """
+
+    @staticmethod
+    def get_polarization_metrics_by_graph_ids(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.polarization_metrics
+            WHERE graph_id = ANY(%s::INTEGER[])
         """
     
     @staticmethod

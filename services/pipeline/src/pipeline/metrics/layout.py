@@ -17,6 +17,7 @@ class LayoutMetrics:
 
     def __init__(self, iterations: int = 50, scale: float = 1000.0):
         self.edge_repo = EdgeRepository()
+        self.graph_repo = GraphRepository()
         self.iterations = iterations
         self.scale = scale
 
@@ -48,7 +49,7 @@ class LayoutMetrics:
 
         nodes_positioned = 0
         for node_id, (x, y) in pos.items():
-            self.edge_repo.upsert_node(
+            self.graph_repo.upsert_node(
                 graph_id=graph_id,
                 deputy_id=node_id,
                 x=float(x),
