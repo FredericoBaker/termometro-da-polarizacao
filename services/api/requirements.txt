@@ -3,3 +3,4 @@ uvicorn[standard]==0.30.1
 pydantic==2.7.4
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.31
+redis==5.0.7

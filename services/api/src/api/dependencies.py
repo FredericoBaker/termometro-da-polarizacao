@@ -1,3 +1,6 @@
+from functools import lru_cache
+
+from api.cache import ApiCache
 from termopol_db.connection import get_db_pool
 from termopol_db.repositories.graph import PolarizationMetricRepository, GraphRepository, EdgeRepository
 from termopol_db.repositories.normalized import NormalizedDeputyRepository, NormalizedPartyRepository
@@ -18,12 +21,17 @@ def get_deputy_repo() -> NormalizedDeputyRepository:
 def get_party_repo() -> NormalizedPartyRepository:
     return NormalizedPartyRepository()
 
+@lru_cache(maxsize=1)
+def get_cache() -> ApiCache:
+    return ApiCache()
+
 
 def get_deputies_service() -> DeputiesService:
     return DeputiesService(
         deputy_repo=get_deputy_repo(),
         graph_repo=get_graph_repo(),
         edge_repo=get_edge_repo(),
+        cache=get_cache(),
     )
 
 
@@ -32,6 +40,7 @@ def get_graphs_service() -> GraphsService:
         graph_repo=get_graph_repo(),
         edge_repo=get_edge_repo(),
         deputy_repo=get_deputy_repo(),
+        cache=get_cache(),
     )
 
 
@@ -39,6 +48,7 @@ def get_metrics_service() -> MetricsService:
     return MetricsService(
         pol_repo=get_polarization_repo(),
         graph_repo=get_graph_repo(),
+        cache=get_cache(),
     )
 
 
@@ -47,6 +57,7 @@ def get_rankings_service() -> RankingsService:
         graph_repo=get_graph_repo(),
         edge_repo=get_edge_repo(),
         deputy_repo=get_deputy_repo(),
+        cache=get_cache(),
     )
 
 

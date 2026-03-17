@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from fastapi import HTTPException
 
+from api.cache import ApiCache
 from termopol_db.repositories.graph import EdgeRepository, GraphRepository
 from termopol_db.repositories.normalized import NormalizedDeputyRepository
 
@@ -12,10 +13,12 @@ class RankingsService:
         graph_repo: GraphRepository,
         edge_repo: EdgeRepository,
         deputy_repo: NormalizedDeputyRepository,
+        cache: ApiCache,
     ) -> None:
         self.graph_repo = graph_repo
         self.edge_repo = edge_repo
         self.deputy_repo = deputy_repo
+        self.cache = cache
 
     @staticmethod
     def _parse_month_identifier(month: str) -> date:
@@ -85,43 +88,54 @@ class RankingsService:
         month: str | None = None,
         limit: int = 10,
     ) -> dict:
-        graph = self._resolve_graph(legislature=legislature, year=year, month=month)
-        graph_id = graph["id"]
+        cache_key = self.cache.make_key(
+            "rankings:get_rankings:v1",
+            legislature=legislature,
+            year=year,
+            month=month,
+            limit=limit,
+        )
 
-        top_agreements = self.edge_repo.get_top_agreement_edges_by_graph(graph_id, limit=limit)
-        top_disagreements = self.edge_repo.get_top_disagreement_edges_by_graph(graph_id, limit=limit)
+        def _build() -> dict:
+            graph = self._resolve_graph(legislature=legislature, year=year, month=month)
+            graph_id = graph["id"]
 
-        edge_rows = top_agreements + top_disagreements
-        deputy_ids = sorted({d for edge in edge_rows for d in (edge["deputy_a"], edge["deputy_b"])})
-        deputies = self.deputy_repo.get_deputies_by_ids(deputy_ids)
-        deputy_map = {row["id"]: row for row in deputies}
+            top_agreements = self.edge_repo.get_top_agreement_edges_by_graph(graph_id, limit=limit)
+            top_disagreements = self.edge_repo.get_top_disagreement_edges_by_graph(graph_id, limit=limit)
 
-        if graph.get("legislature") is not None:
-            party_rows = self.deputy_repo.get_terms_with_party_by_deputies_and_legislature(
-                deputy_ids,
-                graph["legislature"],
-            )
-        else:
-            party_rows = self.deputy_repo.get_latest_terms_with_party_by_deputies(deputy_ids)
-        party_map = {row["deputy_id"]: row for row in party_rows}
+            edge_rows = top_agreements + top_disagreements
+            deputy_ids = sorted({d for edge in edge_rows for d in (edge["deputy_a"], edge["deputy_b"])})
+            deputies = self.deputy_repo.get_deputies_by_ids(deputy_ids)
+            deputy_map = {row["id"]: row for row in deputies}
 
-        def _format_edge(edge: dict) -> dict:
-            deputy_a_id = edge["deputy_a"]
-            deputy_b_id = edge["deputy_b"]
+            if graph.get("legislature") is not None:
+                party_rows = self.deputy_repo.get_terms_with_party_by_deputies_and_legislature(
+                    deputy_ids,
+                    graph["legislature"],
+                )
+            else:
+                party_rows = self.deputy_repo.get_latest_terms_with_party_by_deputies(deputy_ids)
+            party_map = {row["deputy_id"]: row for row in party_rows}
+
+            def _format_edge(edge: dict) -> dict:
+                deputy_a_id = edge["deputy_a"]
+                deputy_b_id = edge["deputy_b"]
+                return {
+                    "id": f'{graph_id}:{deputy_a_id}-{deputy_b_id}',
+                    "graph_id": graph_id,
+                    "deputy_a_id": deputy_a_id,
+                    "deputy_b_id": deputy_b_id,
+                    "w_signed": edge.get("w_signed"),
+                    "abs_w": edge.get("abs_w"),
+                    "is_backbone": edge.get("is_backbone"),
+                    "deputy_a": self._deputy_payload(deputy_map.get(deputy_a_id), party_map.get(deputy_a_id)),
+                    "deputy_b": self._deputy_payload(deputy_map.get(deputy_b_id), party_map.get(deputy_b_id)),
+                }
+
             return {
-                "id": f'{graph_id}:{deputy_a_id}-{deputy_b_id}',
-                "graph_id": graph_id,
-                "deputy_a_id": deputy_a_id,
-                "deputy_b_id": deputy_b_id,
-                "w_signed": edge.get("w_signed"),
-                "abs_w": edge.get("abs_w"),
-                "is_backbone": edge.get("is_backbone"),
-                "deputy_a": self._deputy_payload(deputy_map.get(deputy_a_id), party_map.get(deputy_a_id)),
-                "deputy_b": self._deputy_payload(deputy_map.get(deputy_b_id), party_map.get(deputy_b_id)),
+                "graph": graph,
+                "top_agreements": [_format_edge(edge) for edge in top_agreements],
+                "top_disagreements": [_format_edge(edge) for edge in top_disagreements],
             }
 
-        return {
-            "graph": graph,
-            "top_agreements": [_format_edge(edge) for edge in top_agreements],
-            "top_disagreements": [_format_edge(edge) for edge in top_disagreements],
-        }
+        return self.cache.get_or_set(cache_key, _build)

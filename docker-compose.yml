@@ -1,4 +1,10 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: termopol-redis
+    ports:
+      - "6379:6379"
+
   db:
     image: postgres:16
     container_name: termopol-db
@@ -30,9 +36,13 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      CACHE_BYPASS: ${CACHE_BYPASS:-0}
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - ./services/api/src:/app/services/api/src:ro
       - ./libs/termopol_db/src:/libs/termopol_db/src:ro
