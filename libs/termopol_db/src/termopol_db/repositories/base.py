@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import psycopg2.extras
 import logging
+import uuid
 
 from termopol_db.connection import get_db_pool, get_schema as get_schema_name
 
@@ -131,16 +132,36 @@ class BaseRepository:
         Yields:
             Individual record dicts one at a time
         """
-        offset = 0
-        while True:
-            batch = self._execute_query_paginated(query, params, limit=batch_size, offset=offset)
-            if not batch:
-                break
-            
-            for record in batch:
-                yield record
-            
-            offset += batch_size
+        cursor_name = f"termopol_stream_{uuid.uuid4().hex}"
+
+        with self.db_pool.get_connection() as conn:
+            cursor = conn.cursor(
+                name=cursor_name,
+                cursor_factory=psycopg2.extras.RealDictCursor
+            )
+
+            try:
+                cursor.itersize = batch_size
+                cursor.execute(query, params)
+
+                while True:
+                    batch = cursor.fetchmany(batch_size)
+                    if not batch:
+                        break
+
+                    for record in batch:
+                        yield dict(record)
+
+            except psycopg2.Error:
+                logger.error(
+                    "Generator query execution failed",
+                    extra={"query": query[:100]},
+                    exc_info=True
+                )
+                raise
+
+            finally:
+                cursor.close()
 
     def get_by_date_range(
         self,
