@@ -32,6 +32,8 @@ From repository root:
 docker compose up -d redis db api
 ```
 
+The startup flow includes a migration runner (`db-migrations`) that applies all SQL files in `ops/postgres/migrations` before the API starts.
+
 Useful checks:
 
 ```bash
@@ -81,6 +83,19 @@ Reset database (remove volume and reinitialize schema):
 ```bash
 docker compose down -v --remove-orphans
 docker compose up -d redis db api
+```
+
+## Database Migrations (Incremental)
+
+- Keep `ops/postgres/init.sql` as bootstrap for brand new volumes only.
+- Put every schema change in a new SQL file under `ops/postgres/migrations`.
+- Migrations run automatically via `db-migrations` when you start the stack.
+
+Run migrations manually (without starting API):
+
+```bash
+docker compose up -d db
+docker compose run --rm db-migrations
 ```
 
 ## Run Pipeline

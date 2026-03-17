@@ -23,6 +23,26 @@ services:
       timeout: 5s
       retries: 10
 
+  db-migrations:
+    image: postgres:16
+    container_name: termopol-db-migrations
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-termopol}
+      MIGRATIONS_DIR: /migrations
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./ops/postgres/migrations:/migrations:ro
+      - ./ops/postgres/run-migrations.sh:/scripts/run-migrations.sh:ro
+    command: bash /scripts/run-migrations.sh
+    restart: "no"
+
   api:
     build:
       context: .
@@ -41,6 +61,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-migrations:
+        condition: service_completed_successfully
       redis:
         condition: service_started
     volumes:
