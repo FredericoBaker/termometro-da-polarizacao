@@ -22,8 +22,7 @@ class LayoutMetrics:
         self.scale = scale
 
     def compute_graph_layout(self, graph_id: int) -> Dict[str, int]:
-        edges = self.edge_repo.get_edges_by_graph(graph_id)
-        backbone_edges = [e for e in edges if e.get("is_backbone")]
+        backbone_edges = self.edge_repo.get_backbone_edges_by_graph(graph_id)
 
         if not backbone_edges:
             logger.info("No backbone edges found for graph layout", extra={"graph_id": graph_id})

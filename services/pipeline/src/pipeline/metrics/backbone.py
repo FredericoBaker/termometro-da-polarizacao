@@ -31,6 +31,7 @@ class BackboneMetrics:
         self.alpha_max = alpha_max
         self.alpha_tolerance = alpha_tolerance
         self.max_alpha_iterations = max_alpha_iterations
+        self.p_values_batch_size = 5000
 
     def compute_graph_backbone(self, graph_id: int) -> Dict[str, Any]:
         updated_p_values = self.compute_graph_p_values(graph_id)
@@ -78,7 +79,7 @@ class BackboneMetrics:
             strengths[deputy_a] += w_abs
             strengths[deputy_b] += w_abs
 
-        updated_edges = 0
+        update_rows = []
         for edge in edges:
             deputy_a = edge["deputy_a"]
             deputy_b = edge["deputy_b"]
@@ -86,15 +87,12 @@ class BackboneMetrics:
 
             p_deputy_a = w_abs / strengths[deputy_a] if strengths[deputy_a] > 0 else 0.0
             p_deputy_b = w_abs / strengths[deputy_b] if strengths[deputy_b] > 0 else 0.0
+            update_rows.append((graph_id, deputy_a, deputy_b, p_deputy_a, p_deputy_b))
 
-            self.edge_repo.update_edge_p_values(
-                graph_id=graph_id,
-                deputy_a=deputy_a,
-                deputy_b=deputy_b,
-                p_deputy_a=p_deputy_a,
-                p_deputy_b=p_deputy_b,
-            )
-            updated_edges += 1
+        updated_edges = self.edge_repo.bulk_update_edge_p_values(
+            update_rows,
+            page_size=self.p_values_batch_size,
+        )
 
         logger.info(
             "Computed p_ij for graph edges",

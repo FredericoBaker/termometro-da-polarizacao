@@ -184,6 +184,16 @@ class EdgeRepository(BaseRepository):
         params = (p_deputy_a, p_deputy_b, graph_id, deputy_a, deputy_b)
         return self._execute_query(query, params, fetch_one=True)
 
+    def bulk_update_edge_p_values(
+        self,
+        rows: List[Tuple[int, int, int, float, float]],
+        page_size: int = 5000,
+    ) -> int:
+        if not rows:
+            return 0
+        query = GraphQueries.bulk_update_edge_p_values(self.schema)
+        return self._execute_values(query, rows, page_size=page_size)
+
     def reset_backbone_flags(self, graph_id: int) -> int:
         query = GraphQueries.reset_backbone_flags(self.schema)
         return self._execute_update(query, (graph_id,))

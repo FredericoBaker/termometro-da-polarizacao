@@ -151,6 +151,21 @@ class GraphQueries:
         """
 
     @staticmethod
+    def bulk_update_edge_p_values(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.edges e
+            SET p_deputy_a = v.p_deputy_a,
+                p_deputy_b = v.p_deputy_b,
+                updated_at = now()
+            FROM (
+                VALUES %s
+            ) AS v(graph_id, deputy_a, deputy_b, p_deputy_a, p_deputy_b)
+            WHERE e.graph_id = v.graph_id
+              AND e.deputy_a = v.deputy_a
+              AND e.deputy_b = v.deputy_b;
+        """
+
+    @staticmethod
     def reset_backbone_flags(schema: str) -> str:
         return f"""
             UPDATE {schema}.edges

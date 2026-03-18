@@ -29,8 +29,7 @@ class PolarizationMetrics:
         self.metric_repo = PolarizationMetricRepository()
 
     def compute_graph_polarization(self, graph_id: int) -> Dict[str, float]:
-        edges = self.edge_repo.get_edges_by_graph(graph_id)
-        backbone_edges = [edge for edge in edges if edge.get("is_backbone")]
+        backbone_edges = self.edge_repo.get_backbone_edges_by_graph(graph_id)
 
         counts = self._count_signed_triads(backbone_edges)
         triads_total = (

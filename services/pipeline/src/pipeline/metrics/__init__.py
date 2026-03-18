@@ -20,15 +20,15 @@ class MetricsRunner:
         graphs = self.graph_repo.get_dirty_graphs()
         processed_graphs = 0
 
-        for graph in graphs:
-            graph_id = graph["id"]
-            logger.info("Starting metrics for graph", extra={"graph_id": graph_id})
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            for graph in graphs:
+                graph_id = graph["id"]
+                logger.info("Starting metrics for graph", extra={"graph_id": graph_id})
 
-            # 1. Backbone must run first
-            self.backbone_metrics.compute_graph_backbone(graph_id)
+                # 1. Backbone must run first
+                self.backbone_metrics.compute_graph_backbone(graph_id)
 
-            # 2. Polarization and Layout can run in parallel
-            with ThreadPoolExecutor(max_workers=2) as executor:
+                # 2. Polarization and Layout can run in parallel
                 future_polarization = executor.submit(
                     self.polarization_metrics.compute_graph_polarization, graph_id
                 )
@@ -39,8 +39,8 @@ class MetricsRunner:
                 future_polarization.result()
                 future_layout.result()
 
-            self.graph_repo.clear_graph_metrics_dirty(graph_id)
-            processed_graphs += 1
+                self.graph_repo.clear_graph_metrics_dirty(graph_id)
+                processed_graphs += 1
 
         logger.info(
             "Finished all metrics computation for dirty graphs",
