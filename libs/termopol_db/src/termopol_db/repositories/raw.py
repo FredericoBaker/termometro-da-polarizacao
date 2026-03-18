@@ -60,6 +60,12 @@ class RawPartyRepository(BaseRepository):
         query = RawQueries.clear_party_dirty(self.schema)
         return self._execute_query(query, (party_id,), fetch_one=True)
 
+    def clear_parties_dirty_bulk(self, party_ids: List[int]) -> int:
+        if not party_ids:
+            return 0
+        query = RawQueries.clear_parties_dirty_bulk(self.schema)
+        return self._execute_update(query, (party_ids,))
+
     def get_parties_by_date_range(
         self,
         start_date: datetime,
@@ -165,6 +171,12 @@ class RawDeputyRepository(BaseRepository):
     def clear_deputy_dirty(self, deputy_id: int) -> Optional[Dict[str, Any]]:
         query = RawQueries.clear_deputy_dirty(self.schema)
         return self._execute_query(query, (deputy_id,), fetch_one=True)
+
+    def clear_deputies_dirty_bulk(self, deputy_ids: List[int]) -> int:
+        if not deputy_ids:
+            return 0
+        query = RawQueries.clear_deputies_dirty_bulk(self.schema)
+        return self._execute_update(query, (deputy_ids,))
 
     def get_deputies_by_date_range(
         self,
@@ -286,6 +298,12 @@ class RawVotingRepository(BaseRepository):
         query = RawQueries.clear_voting_dirty(self.schema)
         return self._execute_query(query, (voting_id,), fetch_one=True)
 
+    def clear_votings_dirty_bulk(self, voting_ids: List[str]) -> int:
+        if not voting_ids:
+            return 0
+        query = RawQueries.clear_votings_dirty_bulk(self.schema)
+        return self._execute_update(query, (voting_ids,))
+
     def get_votings_by_date_range(
         self,
         start_date: datetime,
@@ -395,6 +413,12 @@ class RawRollcallRepository(BaseRepository):
     def clear_rollcall_dirty(self, raw_rollcall_id: int) -> Optional[Dict[str, Any]]:
         query = RawQueries.clear_rollcall_dirty(self.schema)
         return self._execute_query(query, (raw_rollcall_id,), fetch_one=True)
+
+    def clear_rollcalls_dirty_bulk(self, raw_rollcall_ids: List[int]) -> int:
+        if not raw_rollcall_ids:
+            return 0
+        query = RawQueries.clear_rollcalls_dirty_bulk(self.schema)
+        return self._execute_update(query, (raw_rollcall_ids,))
 
     def get_rollcalls_by_date_range(
         self,

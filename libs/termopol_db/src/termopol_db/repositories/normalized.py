@@ -42,6 +42,12 @@ class NormalizedPartyRepository(BaseRepository):
     def get_party_by_code(self, party_code: str) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_party_by_code(self.schema)
         return self._execute_query(query, (party_code,), fetch_one=True)
+
+    def get_parties_by_codes(self, party_codes: List[str]) -> List[Dict[str, Any]]:
+        if not party_codes:
+            return []
+        query = NormalizedQueries.get_parties_by_codes(self.schema)
+        return self._execute_query(query, (party_codes,), fetch_one=False)
     
     def get_all_parties(self) -> List[Dict[str, Any]]:
         query = NormalizedQueries.get_all_parties(self.schema)
@@ -113,6 +119,12 @@ class NormalizedDeputyRepository(BaseRepository):
     def get_deputy_by_external_id(self, external_id: int) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_deputy_by_external_id(self.schema)
         return self._execute_query(query, (external_id,), fetch_one=True)
+
+    def get_deputies_by_external_ids(self, external_ids: List[int]) -> List[Dict[str, Any]]:
+        if not external_ids:
+            return []
+        query = NormalizedQueries.get_deputies_by_external_ids(self.schema)
+        return self._execute_query(query, (external_ids,), fetch_one=False)
 
     def get_deputy_by_id(self, deputy_id: int) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_deputy_by_id(self.schema)
@@ -205,6 +217,17 @@ class NormalizedDeputyRepository(BaseRepository):
         """Get a deputy's term for a specific legislature."""
         query = NormalizedQueries.get_deputy_legislature_term(self.schema)
         return self._execute_query(query, (deputy_id, legislature), fetch_one=True)
+
+    def get_deputy_legislature_terms_by_pairs(
+        self,
+        deputy_legislature_pairs: List[tuple[int, int]]
+    ) -> List[Dict[str, Any]]:
+        if not deputy_legislature_pairs:
+            return []
+        deputy_ids = [pair[0] for pair in deputy_legislature_pairs]
+        legislatures = [pair[1] for pair in deputy_legislature_pairs]
+        query = NormalizedQueries.get_deputy_legislature_terms_by_pairs(self.schema)
+        return self._execute_query(query, (deputy_ids, legislatures), fetch_one=False)
     
     def get_terms_by_deputy(self, deputy_id: int) -> List[Dict[str, Any]]:
         """Get all legislature terms for a deputy."""
@@ -265,6 +288,12 @@ class NormalizedVotingRepository(BaseRepository):
     def get_voting_by_external_id(self, external_id: int) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_voting_by_external_id(self.schema)
         return self._execute_query(query, (external_id,), fetch_one=True)
+
+    def get_votings_by_external_ids(self, external_ids: List[str]) -> List[Dict[str, Any]]:
+        if not external_ids:
+            return []
+        query = NormalizedQueries.get_votings_by_external_ids(self.schema)
+        return self._execute_query(query, (external_ids,), fetch_one=False)
     
     def get_votings_by_date_range(self, start_date: date, end_date: date) -> List[Dict[str, Any]]:
         query = NormalizedQueries.get_votings_by_date_range(self.schema)
@@ -356,6 +385,16 @@ class NormalizedRollcallRepository(BaseRepository):
             extra={"voting_id": voting_id, "deputy_id": deputy_id, "vote": vote}
         )
         return self._execute_query(query, params, fetch_one=True)
+
+    def bulk_upsert_rollcalls(
+        self,
+        rows: List[tuple[int, datetime, int, int, int]],
+        page_size: int = 5000
+    ) -> int:
+        if not rows:
+            return 0
+        query = NormalizedQueries.bulk_upsert_rollcalls(self.schema)
+        return self._execute_values(query, rows, page_size=page_size)
     
     def get_rollcall(self, voting_id: int, deputy_id: int) -> Optional[Dict[str, Any]]:
         query = NormalizedQueries.get_rollcall(self.schema)

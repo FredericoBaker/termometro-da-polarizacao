@@ -39,6 +39,15 @@ class RawQueries:
             WHERE id = %s
             RETURNING *;
         """
+
+    @staticmethod
+    def clear_parties_dirty_bulk(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.raw_parties
+            SET transform_dirty = FALSE,
+                updated_at = now()
+            WHERE id = ANY(%s::INTEGER[]);
+        """
     
     # ===================== DEPUTIES =====================
     
@@ -83,6 +92,15 @@ class RawQueries:
                 updated_at = now()
             WHERE id = %s
             RETURNING *;
+        """
+
+    @staticmethod
+    def clear_deputies_dirty_bulk(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.raw_deputies
+            SET transform_dirty = FALSE,
+                updated_at = now()
+            WHERE id = ANY(%s::INTEGER[]);
         """
     
     # ===================== VOTINGS =====================
@@ -130,6 +148,15 @@ class RawQueries:
                 updated_at = now()
             WHERE id = %s
             RETURNING *;
+        """
+
+    @staticmethod
+    def clear_votings_dirty_bulk(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.raw_votings
+            SET transform_dirty = FALSE,
+                updated_at = now()
+            WHERE id = ANY(%s::TEXT[]);
         """
     
     # ===================== ROLLCALLS =====================
@@ -188,4 +215,13 @@ class RawQueries:
                 updated_at = now()
             WHERE id = %s
             RETURNING *;
+        """
+
+    @staticmethod
+    def clear_rollcalls_dirty_bulk(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.raw_rollcalls
+            SET transform_dirty = FALSE,
+                updated_at = now()
+            WHERE id = ANY(%s::INTEGER[]);
         """

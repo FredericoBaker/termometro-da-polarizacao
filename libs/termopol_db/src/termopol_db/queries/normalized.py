@@ -27,6 +27,13 @@ class NormalizedQueries:
     @staticmethod
     def get_party_by_code(schema: str) -> str:
         return f"SELECT * FROM {schema}.parties WHERE party_code = %s"
+
+    @staticmethod
+    def get_parties_by_codes(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.parties
+            WHERE party_code = ANY(%s::TEXT[])
+        """
     
     @staticmethod
     def get_all_parties(schema: str) -> str:
@@ -52,6 +59,13 @@ class NormalizedQueries:
     @staticmethod
     def get_deputy_by_external_id(schema: str) -> str:
         return f"SELECT * FROM {schema}.deputies WHERE external_id = %s"
+
+    @staticmethod
+    def get_deputies_by_external_ids(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.deputies
+            WHERE external_id = ANY(%s::INTEGER[])
+        """
 
     @staticmethod
     def get_deputies_by_ids(schema: str) -> str:
@@ -87,6 +101,21 @@ class NormalizedQueries:
         return f"""
             SELECT * FROM {schema}.deputies_legislature_terms 
             WHERE deputy_id = %s AND legislature_id = %s
+        """
+
+    @staticmethod
+    def get_deputy_legislature_terms_by_pairs(schema: str) -> str:
+        return f"""
+            WITH pairs AS (
+                SELECT
+                    UNNEST(%s::INTEGER[]) AS deputy_id,
+                    UNNEST(%s::INTEGER[]) AS legislature_id
+            )
+            SELECT t.*
+            FROM {schema}.deputies_legislature_terms t
+            JOIN pairs p
+              ON p.deputy_id = t.deputy_id
+             AND p.legislature_id = t.legislature_id
         """
     
     @staticmethod
@@ -172,6 +201,13 @@ class NormalizedQueries:
     @staticmethod
     def get_voting_by_external_id(schema: str) -> str:
         return f"SELECT * FROM {schema}.votings WHERE external_id = %s"
+
+    @staticmethod
+    def get_votings_by_external_ids(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.votings
+            WHERE external_id = ANY(%s::TEXT[])
+        """
     
     @staticmethod
     def get_all_votings(schema: str) -> str:
@@ -215,6 +251,19 @@ class NormalizedQueries:
                 voting_datetime = EXCLUDED.voting_datetime,
                 legislature_term_id = EXCLUDED.legislature_term_id
             RETURNING *;
+        """
+
+    @staticmethod
+    def bulk_upsert_rollcalls(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.rollcalls
+            (voting_id, voting_datetime, vote, deputy_id, legislature_term_id)
+            VALUES %s
+            ON CONFLICT (voting_id, deputy_id) DO UPDATE
+            SET vote = EXCLUDED.vote,
+                voting_datetime = EXCLUDED.voting_datetime,
+                legislature_term_id = EXCLUDED.legislature_term_id,
+                updated_at = now();
         """
     
     @staticmethod
