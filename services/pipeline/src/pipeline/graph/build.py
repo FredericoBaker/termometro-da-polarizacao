@@ -3,6 +3,8 @@ from typing import Optional
 import itertools
 import math
 import logging
+import os
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 from termopol_db.repositories import (
     NormalizedVotingRepository, 
@@ -25,16 +27,50 @@ class BuildGraph:
         self.rollcall_repo = NormalizedRollcallRepository()
         self.graph_repo = GraphRepository()
         self.edge_repo = EdgeRepository()
+        self.edge_batch_size = max(1000, int(os.getenv("GRAPH_EDGE_BATCH_SIZE", "5000")))
+        self.max_workers = max(1, int(os.getenv("GRAPH_BUILD_WORKERS", "4")))
+        self.max_in_flight = max(
+            self.max_workers,
+            int(os.getenv("GRAPH_BUILD_MAX_IN_FLIGHT", str(self.max_workers * 4)))
+        )
 
     def build(self) -> None:
-        logger.info("Starting graph build")
-        voting_count = 0
-        for voting in self.voting_repo.get_graph_dirty_votings_generator():
-            voting_count += 1
-            if voting_count % 10 == 0:
-                logger.info("Processing voting batch", extra={"processed_votings": voting_count})
-            self._process_voting(voting)
-        logger.info("Finished graph build", extra={"total_votings_processed": voting_count})
+        logger.info(
+            "Starting graph build",
+            extra={
+                "workers": self.max_workers,
+                "max_in_flight": self.max_in_flight,
+                "edge_batch_size": self.edge_batch_size
+            },
+        )
+        submitted = 0
+        completed = 0
+        futures = set()
+
+        with ThreadPoolExecutor(max_workers=self.max_workers, thread_name_prefix="graph-build") as executor:
+            for voting in self.voting_repo.get_graph_dirty_votings_generator():
+                futures.add(executor.submit(self._process_voting, voting))
+                submitted += 1
+
+                if submitted % 10 == 0:
+                    logger.info("Queued voting batch", extra={"queued_votings": submitted})
+
+                if len(futures) >= self.max_in_flight:
+                    done, futures = wait(futures, return_when=FIRST_COMPLETED)
+                    for done_future in done:
+                        done_future.result()
+                        completed += 1
+
+            while futures:
+                done, futures = wait(futures, return_when=FIRST_COMPLETED)
+                for done_future in done:
+                    done_future.result()
+                    completed += 1
+
+        logger.info(
+            "Finished graph build",
+            extra={"total_votings_queued": submitted, "total_votings_completed": completed},
+        )
 
     def _process_voting(self, voting: dict) -> None:
         voting_id = voting.get('id')
@@ -125,11 +161,12 @@ class BuildGraph:
             self.voting_repo.clear_voting_graph_dirty(voting_id)
             return
 
-        # 3. Process pairs and update edges
-        # We need to update edges for all combinations of deputies who voted
+        # 3. Process pairs and bulk-upsert edges
         pair_count = 0
         total_pairs = math.comb(len(all_voters), 2)
-        
+        edge_rows = []
+        upserted_rows = 0
+
         for d1, d2 in itertools.combinations(all_voters, 2):
             # Determine weight delta
             # Same vote: +1, Different vote: -1
@@ -137,23 +174,38 @@ class BuildGraph:
             v2 = 1 if d2 in yes_votes else 0
             
             delta_w = 1 if v1 == v2 else -1
-            
+
             for graph in graphs_to_update:
-                self.edge_repo.upsert_edge(
-                    graph_id=graph.get('id'),
-                    deputy_a=d1,
-                    deputy_b=d2,
-                    w_signed=delta_w,
-                    p_deputy_a=None,
-                    p_deputy_b=None
+                edge_rows.append(
+                    (
+                        graph.get('id'),
+                        d1,
+                        d2,
+                        delta_w,
+                        abs(delta_w),
+                        None,
+                        None,
+                    )
                 )
-            
+            if len(edge_rows) >= self.edge_batch_size:
+                upserted_rows += self.edge_repo.bulk_upsert_edges(
+                    edge_rows,
+                    page_size=self.edge_batch_size,
+                )
+                edge_rows = []
+
             pair_count += 1
             if pair_count % 5000 == 0:
                 logger.debug(
                     "Processed edge pairs for voting",
                     extra={"voting_id": voting_id, "processed_pairs": pair_count, "total_pairs": total_pairs},
                 )
+
+        if edge_rows:
+            upserted_rows += self.edge_repo.bulk_upsert_edges(
+                edge_rows,
+                page_size=self.edge_batch_size,
+            )
         
         # 4. Mark voting as processed for these graphs
         for graph in graphs_to_update:
@@ -161,6 +213,15 @@ class BuildGraph:
             self.graph_repo.upsert_graph_voting(graph_id, voting_id)
             self.graph_repo.mark_graph_metrics_dirty(graph_id)
         self.voting_repo.clear_voting_graph_dirty(voting_id)
+        logger.debug(
+            "Finished voting graph build",
+            extra={
+                "voting_id": voting_id,
+                "graphs_updated": len(graphs_to_update),
+                "total_pairs": total_pairs,
+                "upserted_edge_rows": upserted_rows,
+            },
+        )
 
     def _get_legislature(self, date: datetime) -> Optional[int]:
         """

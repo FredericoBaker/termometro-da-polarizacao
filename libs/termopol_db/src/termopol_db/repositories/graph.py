@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import date
 
 from termopol_db.repositories.base import BaseRepository
@@ -155,6 +155,17 @@ class EdgeRepository(BaseRepository):
             }
         )
         return self._execute_query(query, params, fetch_one=True)
+
+    def bulk_upsert_edges(
+        self,
+        edge_rows: List[Tuple[int, int, int, float, float, Optional[float], Optional[float]]],
+        page_size: int = 5000
+    ) -> int:
+        if not edge_rows:
+            return 0
+
+        query = GraphQueries.bulk_upsert_edges(self.schema)
+        return self._execute_values(query, edge_rows, page_size=page_size)
 
     def update_edge_p_values(
         self,

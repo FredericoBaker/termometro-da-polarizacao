@@ -126,6 +126,20 @@ class GraphQueries:
         """
 
     @staticmethod
+    def bulk_upsert_edges(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.edges
+            (graph_id, deputy_a, deputy_b, w_signed, abs_w, p_deputy_a, p_deputy_b)
+            VALUES %s
+            ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
+            SET w_signed = {schema}.edges.w_signed + EXCLUDED.w_signed,
+                abs_w = ABS({schema}.edges.w_signed + EXCLUDED.w_signed),
+                p_deputy_a = EXCLUDED.p_deputy_a,
+                p_deputy_b = EXCLUDED.p_deputy_b,
+                updated_at = now();
+        """
+
+    @staticmethod
     def update_edge_p_values(schema: str) -> str:
         return f"""
             UPDATE {schema}.edges

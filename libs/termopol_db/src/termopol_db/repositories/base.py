@@ -90,6 +90,49 @@ class BaseRepository:
             finally:
                 cursor.close()
 
+    def _execute_values(
+        self,
+        query: str,
+        values: List[tuple],
+        page_size: int = 5000
+    ) -> int:
+        """
+        Execute a bulk INSERT/UPSERT.
+
+        Args:
+            query: SQL query with a VALUES %s placeholder
+            values: Sequence of tuples to insert
+            page_size: Number of rows per VALUES batch
+
+        Returns:
+            Number of rows attempted
+        """
+        if not values:
+            return 0
+
+        with self.db_pool.get_connection() as conn:
+            cursor = conn.cursor()
+
+            try:
+                psycopg2.extras.execute_values(
+                    cursor,
+                    query,
+                    values,
+                    page_size=page_size,
+                )
+                return len(values)
+
+            except psycopg2.Error:
+                logger.error(
+                    "Bulk values execution failed",
+                    extra={"query": query[:100], "values_count": len(values)},
+                    exc_info=True
+                )
+                raise
+
+            finally:
+                cursor.close()
+
     def _execute_query_paginated(
         self,
         query: str,
