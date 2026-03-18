@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from termopol_db.repositories import (
@@ -19,7 +18,7 @@ class RollCallTransformer:
         self.votings_repo = NormalizedVotingRepository()
         self.parties_repo = NormalizedPartyRepository()
 
-    def transform(self, start_date: datetime, end_date: datetime) -> None:
+    def transform(self) -> None:
         """
             Transforms all newly ingested rollcall data and upserts into normalized rollcalls table.
 

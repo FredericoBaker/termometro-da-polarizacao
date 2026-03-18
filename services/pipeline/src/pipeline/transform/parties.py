@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from termopol_db.repositories import RawPartyRepository, NormalizedPartyRepository
 
 
@@ -8,7 +6,7 @@ class PartyTransformer:
         self.raw_party_repo = RawPartyRepository()
         self.party_repo = NormalizedPartyRepository()
 
-    def transform(self, start_date: datetime, end_date: datetime) -> None:
+    def transform(self) -> None:
         """
             Transforms all newly ingested party data and upserts into normalized parties table.
         """

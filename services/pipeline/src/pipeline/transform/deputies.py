@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from termopol_db.repositories import RawDeputyRepository, NormalizedDeputyRepository
 
@@ -11,7 +10,7 @@ class DeputyTransformer:
         self.raw_deputy_repo = RawDeputyRepository()
         self.deputy_repo = NormalizedDeputyRepository()
 
-    def transform(self, start_date: datetime, end_date: datetime) -> None:
+    def transform(self) -> None:
         """
             Transforms all newly ingested deputy data and upserts into normalized deputies table.
         """

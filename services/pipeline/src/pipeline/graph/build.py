@@ -26,10 +26,10 @@ class BuildGraph:
         self.graph_repo = GraphRepository()
         self.edge_repo = EdgeRepository()
 
-    def build(self, start_date: datetime, end_date: datetime) -> None:
-        logger.info("Starting graph build", extra={"start_date": start_date, "end_date": end_date})
+    def build(self) -> None:
+        logger.info("Starting graph build")
         voting_count = 0
-        for voting in self.voting_repo.get_votings_by_created_updated_range_generator(start_date, end_date):
+        for voting in self.voting_repo.get_graph_dirty_votings_generator():
             voting_count += 1
             if voting_count % 10 == 0:
                 logger.info("Processing voting batch", extra={"processed_votings": voting_count})
@@ -83,6 +83,7 @@ class BuildGraph:
                 graphs_to_update.append(graph)
         
         if not graphs_to_update:
+            self.voting_repo.clear_voting_graph_dirty(voting_id)
             return
 
         # 2. Get rollcalls and group deputies by vote
@@ -119,6 +120,9 @@ class BuildGraph:
         
         all_voters = sorted(yes_votes | no_votes)
         if len(all_voters) < 2:
+            for graph in graphs_to_update:
+                self.graph_repo.upsert_graph_voting(graph.get('id'), voting_id)
+            self.voting_repo.clear_voting_graph_dirty(voting_id)
             return
 
         # 3. Process pairs and update edges
@@ -156,6 +160,7 @@ class BuildGraph:
             graph_id = graph.get('id')
             self.graph_repo.upsert_graph_voting(graph_id, voting_id)
             self.graph_repo.mark_graph_metrics_dirty(graph_id)
+        self.voting_repo.clear_voting_graph_dirty(voting_id)
 
     def _get_legislature(self, date: datetime) -> Optional[int]:
         """

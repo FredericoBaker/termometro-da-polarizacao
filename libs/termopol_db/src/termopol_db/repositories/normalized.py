@@ -274,6 +274,17 @@ class NormalizedVotingRepository(BaseRepository):
         query = NormalizedQueries.get_all_votings(self.schema)
         return self._execute_query(query, fetch_one=False)
 
+    def get_graph_dirty_votings_generator(
+        self,
+        batch_size: int = 1000
+    ) -> Generator[Dict[str, Any], None, None]:
+        query = NormalizedQueries.get_graph_dirty_votings(self.schema)
+        yield from self._execute_query_generator(query, batch_size=batch_size)
+
+    def clear_voting_graph_dirty(self, voting_id: int) -> Optional[Dict[str, Any]]:
+        query = NormalizedQueries.clear_voting_graph_dirty(self.schema)
+        return self._execute_query(query, (voting_id,), fetch_one=True)
+
     def get_votings_by_created_updated_range(
         self,
         start_date: datetime,

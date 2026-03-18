@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS termopol.votings (
     external_id TEXT NOT NULL UNIQUE,
     date DATE NOT NULL,
     registration_datetime TIMESTAMPTZ NOT NULL,
+    graph_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     approval BOOLEAN,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -214,6 +215,10 @@ CREATE INDEX IF NOT EXISTS idx_raw_rollcalls_transform_dirty
 
 CREATE INDEX IF NOT EXISTS idx_votings_date
   ON termopol.votings (date);
+
+CREATE INDEX IF NOT EXISTS idx_votings_graph_dirty
+  ON termopol.votings (graph_dirty)
+  WHERE graph_dirty = TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_rollcalls_voting
   ON termopol.rollcalls (voting_id);

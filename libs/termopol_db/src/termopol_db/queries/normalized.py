@@ -159,11 +159,12 @@ class NormalizedQueries:
     @staticmethod
     def upsert_voting(schema: str) -> str:
         return f"""
-            INSERT INTO {schema}.votings (external_id, date, registration_datetime, approval)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO {schema}.votings (external_id, date, registration_datetime, graph_dirty, approval)
+            VALUES (%s, %s, %s, TRUE, %s)
             ON CONFLICT (external_id) DO UPDATE
             SET date = EXCLUDED.date,
                 registration_datetime = EXCLUDED.registration_datetime,
+                graph_dirty = TRUE,
                 approval = EXCLUDED.approval
             RETURNING *;
         """
@@ -182,6 +183,23 @@ class NormalizedQueries:
             SELECT * FROM {schema}.votings 
             WHERE date >= %s AND date <= %s
             ORDER BY date DESC
+        """
+
+    @staticmethod
+    def get_graph_dirty_votings(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.votings
+            WHERE graph_dirty = TRUE
+            ORDER BY date ASC, id ASC
+        """
+
+    @staticmethod
+    def clear_voting_graph_dirty(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.votings
+            SET graph_dirty = FALSE
+            WHERE id = %s
+            RETURNING *;
         """
     
     # ===================== ROLLCALLS =====================

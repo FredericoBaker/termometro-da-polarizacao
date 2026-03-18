@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from termopol_db.repositories import RawVotingRepository, NormalizedVotingRepository
 
@@ -11,7 +10,7 @@ class VotingTransformer:
         self.raw_voting_repo = RawVotingRepository()
         self.voting_repo = NormalizedVotingRepository()
 
-    def transform(self, start_date: datetime, end_date: datetime) -> None:
+    def transform(self) -> None:
         """
             Transforms all newly ingested voting data and upserts into normalized votings table.
         """

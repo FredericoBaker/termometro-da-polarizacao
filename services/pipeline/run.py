@@ -146,24 +146,18 @@ def run_ingest(start_date: datetime, end_date: datetime) -> None:
     logger.info("Ingest step completed")
 
 
-def run_transform(start_date: datetime, end_date: datetime) -> None:
-    logger.info(
-        "Running transform step",
-        extra={"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
-    )
-    PartyTransformer().transform(start_date, end_date)
-    DeputyTransformer().transform(start_date, end_date)
-    VotingTransformer().transform(start_date, end_date)
-    RollCallTransformer().transform(start_date, end_date)
+def run_transform() -> None:
+    logger.info("Running transform step")
+    PartyTransformer().transform()
+    DeputyTransformer().transform()
+    VotingTransformer().transform()
+    RollCallTransformer().transform()
     logger.info("Transform step completed")
 
 
-def run_graph(start_date: datetime, end_date: datetime) -> None:
-    logger.info(
-        "Running graph step",
-        extra={"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
-    )
-    BuildGraph().build(start_date, end_date)
+def run_graph() -> None:
+    logger.info("Running graph step")
+    BuildGraph().build()
     logger.info("Graph step completed")
 
 
@@ -263,10 +257,8 @@ def main() -> None:
 
     try:
         run_step("ingest", lambda: run_ingest(start_date, end_date))
-        run_step("transform", lambda: run_transform(start_date, end_date))
-
-        graph_end_date = current_utc_naive()
-        run_step("graph", lambda: run_graph(start_date, graph_end_date))
+        run_step("transform", run_transform)
+        run_step("graph", run_graph)
         run_step("metrics", run_metrics)
 
         log_repo.mark_completed(log_id)
