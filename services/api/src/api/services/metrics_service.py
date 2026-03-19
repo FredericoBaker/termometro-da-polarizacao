@@ -72,6 +72,28 @@ class MetricsService:
             graphs.sort(key=lambda g: g.get("legislature") or 0, reverse=descending)
         return graphs
 
+    def _get_previous_graph(self, graph: dict, granularity: str) -> dict | None:
+        if granularity == "legislature":
+            legislature = graph.get("legislature")
+            if legislature is None:
+                return None
+            return self.graph_repo.get_graph_by_legislature(legislature - 1)
+
+        if granularity == "year":
+            year = graph.get("year")
+            if year is None:
+                return None
+            return self.graph_repo.get_graph_by_year(year - 1)
+
+        month_value = graph.get("month")
+        if not month_value:
+            return None
+        if month_value.month == 1:
+            previous_month = date(month_value.year - 1, 12, 1)
+        else:
+            previous_month = date(month_value.year, month_value.month - 1, 1)
+        return self.graph_repo.get_graph_by_month(previous_month)
+
     @staticmethod
     def _enrich_metric(metric: dict, voting_count: int) -> dict:
         triads_total = metric.get("triads_total", 0) or 0
@@ -80,19 +102,19 @@ class MetricsService:
         one_positive = metric.get("one_positive_triads", 0) or 0
         zero_positive = metric.get("zero_positive_triads", 0) or 0
 
-        balanced_triads = three_positive + two_positive
+        balanced_triads = three_positive + one_positive
         balanced_triads_ratio = (balanced_triads / triads_total) if triads_total > 0 else None
-        conflict_triads_ratio = ((one_positive + zero_positive) / triads_total) if triads_total > 0 else None
-        two_negative_share_among_balanced = (
-            (two_positive / balanced_triads) if balanced_triads > 0 else None
+        unbalanced_triads_ratio = ((two_positive + zero_positive) / triads_total) if triads_total > 0 else None
+        one_positive_share_among_balanced = (
+            (one_positive / balanced_triads) if balanced_triads > 0 else None
         )
 
         return {
             "polarization_index": metric.get("polarization_index"),
             "triads_total": triads_total,
             "balanced_triads_ratio": balanced_triads_ratio,
-            "conflict_triads_ratio": conflict_triads_ratio,
-            "two_negative_share_among_balanced": two_negative_share_among_balanced,
+            "unbalanced_triads_ratio": unbalanced_triads_ratio,
+            "one_positive_share_among_balanced": one_positive_share_among_balanced,
             "voting_count": voting_count,
             "raw": metric,
         }
@@ -151,20 +173,10 @@ class MetricsService:
             voting_count_rows = self.graph_repo.get_graph_voting_counts_by_graph_ids(graph_ids)
             voting_count_by_graph_id = {row["graph_id"]: row["voting_count"] for row in voting_count_rows}
 
-            previous_graph = None
-            previous_metric_row = None
-            found_current = False
-            for candidate in same_granularity_graphs:
-                if candidate["id"] == graph["id"]:
-                    found_current = True
-                    continue
-                if not found_current:
-                    continue
-                candidate_metric = metrics_by_graph_id.get(candidate["id"])
-                if candidate_metric:
-                    previous_graph = candidate
-                    previous_metric_row = candidate_metric
-                    break
+            previous_graph = self._get_previous_graph(graph, granularity)
+            previous_metric_row = (
+                metrics_by_graph_id.get(previous_graph["id"]) if previous_graph else None
+            )
 
             current_pol = current_metric_row.get("polarization_index")
             previous_pol = previous_metric_row.get("polarization_index") if previous_metric_row else None
