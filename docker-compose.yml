@@ -8,6 +8,7 @@ services:
   db:
     image: postgres:16
     container_name: termopol-db
+    shm_size: "1gb"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
