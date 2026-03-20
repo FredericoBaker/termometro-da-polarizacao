@@ -5,13 +5,38 @@ class GraphQueries:
     # ===================== GRAPH =====================
     
     @staticmethod
-    def upsert_graph(schema: str) -> str:
+    def upsert_legislature_graph(schema: str) -> str:
         return f"""
-            INSERT INTO {schema}.graphs 
-            (time_granularity_id, legislature, year, month)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (time_granularity_id, legislature, year, month) DO UPDATE
-            SET time_granularity_id = EXCLUDED.time_granularity_id
+            INSERT INTO {schema}.graphs (time_granularity_id, legislature, year, month)
+            VALUES (%s, %s, NULL, NULL)
+            ON CONFLICT (time_granularity_id, legislature)
+            WHERE legislature IS NOT NULL AND year IS NULL AND month IS NULL
+            DO UPDATE
+            SET updated_at = now()
+            RETURNING *;
+        """
+
+    @staticmethod
+    def upsert_year_graph(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.graphs (time_granularity_id, legislature, year, month)
+            VALUES (%s, NULL, %s, NULL)
+            ON CONFLICT (time_granularity_id, year)
+            WHERE legislature IS NULL AND year IS NOT NULL AND month IS NULL
+            DO UPDATE
+            SET updated_at = now()
+            RETURNING *;
+        """
+
+    @staticmethod
+    def upsert_month_graph(schema: str) -> str:
+        return f"""
+            INSERT INTO {schema}.graphs (time_granularity_id, legislature, year, month)
+            VALUES (%s, NULL, NULL, %s)
+            ON CONFLICT (time_granularity_id, month)
+            WHERE legislature IS NULL AND year IS NULL AND month IS NOT NULL
+            DO UPDATE
+            SET updated_at = now()
             RETURNING *;
         """
     
@@ -21,15 +46,33 @@ class GraphQueries:
     
     @staticmethod
     def get_graph_by_legislature(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graphs WHERE legislature = %s"
+        return f"""
+            SELECT * FROM {schema}.graphs
+            WHERE time_granularity_id = 1
+              AND legislature = %s
+              AND year IS NULL
+              AND month IS NULL
+        """
     
     @staticmethod
     def get_graph_by_year(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graphs WHERE year = %s"
+        return f"""
+            SELECT * FROM {schema}.graphs
+            WHERE time_granularity_id = 2
+              AND legislature IS NULL
+              AND year = %s
+              AND month IS NULL
+        """
     
     @staticmethod
     def get_graph_by_month(schema: str) -> str:
-        return f"SELECT * FROM {schema}.graphs WHERE month = %s"
+        return f"""
+            SELECT * FROM {schema}.graphs
+            WHERE time_granularity_id = 3
+              AND legislature IS NULL
+              AND year IS NULL
+              AND month = %s
+        """
     
     @staticmethod
     def get_all_graphs(schema: str) -> str:

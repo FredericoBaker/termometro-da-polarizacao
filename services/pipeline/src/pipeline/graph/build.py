@@ -15,12 +15,6 @@ from termopol_db.repositories import (
 
 logger = logging.getLogger(__name__)
 
-GRAPH_GRANULARITIES_IDS = {
-    'legislature': 1,
-    'year': 2,
-    'month': 3
-}
-
 class BuildGraph:
     def __init__(self):
         self.voting_repo = NormalizedVotingRepository()
@@ -82,34 +76,19 @@ class BuildGraph:
         # Legislature Graph
         voting_legislature = self._get_legislature(voting_datetime)
         if voting_legislature:
-            legislature_graph = self.graph_repo.get_graph_by_legislature(voting_legislature)
-            if not legislature_graph:
-                legislature_graph = self.graph_repo.upsert_graph(
-                    time_granularity_id=GRAPH_GRANULARITIES_IDS['legislature'],
-                    legislature=voting_legislature
-                )
+            legislature_graph = self.graph_repo.get_or_create_graph_by_legislature(voting_legislature)
             potential_graphs.append(legislature_graph)
         
         # Year Graph
         voting_year = self._get_year(voting_datetime)
         if voting_year:
-            year_graph = self.graph_repo.get_graph_by_year(voting_year)
-            if not year_graph:
-                year_graph = self.graph_repo.upsert_graph(
-                    time_granularity_id=GRAPH_GRANULARITIES_IDS['year'],
-                    year=voting_year
-                )
+            year_graph = self.graph_repo.get_or_create_graph_by_year(voting_year)
             potential_graphs.append(year_graph)
 
         # Month Graph
         voting_month_date = self._get_month(voting_datetime)
         if voting_month_date:
-            month_graph = self.graph_repo.get_graph_by_month(voting_month_date)
-            if not month_graph:
-                month_graph = self.graph_repo.upsert_graph(
-                    time_granularity_id=GRAPH_GRANULARITIES_IDS['month'],
-                    month=voting_month_date
-                )
+            month_graph = self.graph_repo.get_or_create_graph_by_month(voting_month_date)
             potential_graphs.append(month_graph)
 
         # Filter out graphs that already processed this voting

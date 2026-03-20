@@ -17,29 +17,30 @@ class GraphRepository(BaseRepository):
         year: Optional[int] = None,
         month: Optional[int] = None
     ) -> Optional[Dict[str, Any]]:
-        """
-        Insert or update a graph in graph table.
-        
-        Args:
-            time_granularity_id: Time granularity identifier (1=legislature, 2=year, 3=month)
-            legislature: Legislature number
-            year: Year
-            month: First day of the respective month
-            
-        Returns:
-            The inserted/updated graph record
-        """
-        query = GraphQueries.upsert_graph(self.schema)
-        params = (time_granularity_id, legislature, year, month)
-        logger.debug(
-            "Upserting graph",
-            extra={
-                "time_granularity_id": time_granularity_id,
-                "legislature": legislature,
-                "year": year,
-                "month": month
-            }
+        # Backward-compatible entry point. Exactly one identifier must be set.
+        if legislature is not None and year is None and month is None:
+            return self.get_or_create_graph_by_legislature(legislature)
+        if legislature is None and year is not None and month is None:
+            return self.get_or_create_graph_by_year(year)
+        if legislature is None and year is None and month is not None:
+            return self.get_or_create_graph_by_month(month)
+        raise ValueError(
+            "Invalid graph identifier combination; expected exactly one of legislature, year, month."
         )
+
+    def get_or_create_graph_by_legislature(self, legislature: int) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.upsert_legislature_graph(self.schema)
+        params = (1, legislature)
+        return self._execute_query(query, params, fetch_one=True)
+
+    def get_or_create_graph_by_year(self, year: int) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.upsert_year_graph(self.schema)
+        params = (2, year)
+        return self._execute_query(query, params, fetch_one=True)
+
+    def get_or_create_graph_by_month(self, month_date: date) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.upsert_month_graph(self.schema)
+        params = (3, month_date)
         return self._execute_query(query, params, fetch_one=True)
     
     def get_graph_by_id(self, graph_id: int) -> Optional[Dict[str, Any]]:

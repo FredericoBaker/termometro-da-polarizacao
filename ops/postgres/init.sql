@@ -145,13 +145,24 @@ CREATE TABLE IF NOT EXISTS termopol.graphs (
     metrics_dirty BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (time_granularity_id, legislature, year, month),
     CHECK (
         (legislature IS NOT NULL AND year IS NULL AND month IS NULL)
         OR (legislature IS NULL AND year IS NOT NULL AND month IS NULL)
         OR (legislature IS NULL AND year IS NULL AND month IS NOT NULL)
     )
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_graphs_legislature
+ON termopol.graphs (time_granularity_id, legislature)
+WHERE legislature IS NOT NULL AND year IS NULL AND month IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_graphs_year
+ON termopol.graphs (time_granularity_id, year)
+WHERE legislature IS NULL AND year IS NOT NULL AND month IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_graphs_month
+ON termopol.graphs (time_granularity_id, month)
+WHERE legislature IS NULL AND year IS NULL AND month IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS termopol.edges (
     graph_id INTEGER NOT NULL REFERENCES termopol.graphs(id),
