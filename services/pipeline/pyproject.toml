@@ -19,6 +19,8 @@ dependencies = [
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
     "networkx>=3.0",
+    "numpy",
+    "scipy",
 ]
 
 [project.optional-dependencies]
