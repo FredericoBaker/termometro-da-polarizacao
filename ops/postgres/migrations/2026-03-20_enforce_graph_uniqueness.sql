@@ -33,24 +33,35 @@ DELETE FROM termopol.graph_votings gv
 USING tmp_graph_duplicates d
 WHERE gv.graph_id = d.old_graph_id;
 
+WITH merged_edges AS (
+    SELECT
+        d.new_graph_id AS graph_id,
+        e.deputy_a,
+        e.deputy_b,
+        SUM(e.w_signed)::INTEGER AS w_signed,
+        MIN(e.created_at) AS created_at,
+        MAX(e.updated_at) AS updated_at
+    FROM termopol.edges e
+    JOIN tmp_graph_duplicates d
+      ON d.old_graph_id = e.graph_id
+    GROUP BY d.new_graph_id, e.deputy_a, e.deputy_b
+)
 INSERT INTO termopol.edges (
     graph_id, deputy_a, deputy_b, w_signed, abs_w,
     p_deputy_a, p_deputy_b, is_backbone, created_at, updated_at
 )
 SELECT
-    d.new_graph_id,
-    e.deputy_a,
-    e.deputy_b,
-    e.w_signed,
-    e.abs_w,
-    e.p_deputy_a,
-    e.p_deputy_b,
-    e.is_backbone,
-    e.created_at,
-    e.updated_at
-FROM termopol.edges e
-JOIN tmp_graph_duplicates d
-  ON d.old_graph_id = e.graph_id
+    m.graph_id,
+    m.deputy_a,
+    m.deputy_b,
+    m.w_signed,
+    ABS(m.w_signed),
+    NULL,
+    NULL,
+    FALSE,
+    m.created_at,
+    m.updated_at
+FROM merged_edges m
 ON CONFLICT (graph_id, deputy_a, deputy_b) DO UPDATE
 SET w_signed = termopol.edges.w_signed + EXCLUDED.w_signed,
     abs_w = ABS(termopol.edges.w_signed + EXCLUDED.w_signed),
