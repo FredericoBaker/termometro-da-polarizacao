@@ -4,6 +4,13 @@ import { DeputyPageClient } from '@/components/deputado/DeputyPageClient'
 
 export const metadata: Metadata = {
   title: 'Deputado',
+  description:
+    'Perfil de votação do deputado federal: rede de relações, acordos, desacordos e evolução por legislatura.',
+  openGraph: {
+    title: 'Deputado | Termômetro da Polarização',
+    description:
+      'Perfil de votação do deputado federal: rede de relações, acordos, desacordos e evolução por legislatura.',
+  },
 }
 
 export default async function DeputadoPage({

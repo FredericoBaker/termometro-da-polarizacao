@@ -8,6 +8,13 @@ import { GraphTeaser } from '@/components/dashboard/GraphTeaser'
 
 export const metadata: Metadata = {
   title: 'Painel',
+  description:
+    'Métricas de polarização legislativa, evolução histórica e rankings de acordos e desacordos entre deputados.',
+  openGraph: {
+    title: 'Painel | Termômetro da Polarização',
+    description:
+      'Métricas de polarização legislativa, evolução histórica e rankings de acordos e desacordos entre deputados.',
+  },
 }
 
 export default function DashboardPage() {

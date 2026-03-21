@@ -11,7 +11,7 @@ import {
   formatPeriodLabel,
   formatNumber,
 } from '@/lib/utils'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 
 // ─── Gauge SVG ────────────────────────────────────────────────────────────────
@@ -185,7 +185,17 @@ export function MetricsCard() {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      {isLoading && <LoadingSpinner className="py-12" />}
+      {isLoading && (
+        <div className="space-y-4 py-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="mx-auto h-32 w-56 rounded-full" />
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+          </div>
+        </div>
+      )}
 
       {isError && (
         <ErrorMessage

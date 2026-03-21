@@ -19,7 +19,7 @@ export function DeputyHeader({ deputy, terms, latestParty }: DeputyHeaderProps) 
   const currentLegislature = latestParty?.legislature
 
   return (
-    <div className="flex items-start gap-5 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-start sm:gap-5">
       {/* Photo */}
       <div className="flex-shrink-0">
         {deputy.photo_url ? (
