@@ -73,7 +73,8 @@ export function DeputyPageClient({ id }: { id: number }) {
     )
   }
 
-  const focalKey = String(deputy.external_id)
+  // focalKey comes from the graph itself (node.key from API), not from deputy.external_id
+  const focalKey = subgraphData?.focalKey ?? null
   const available = availableGraphs ? makeAvailableResponse(availableGraphs) : null
 
   return (
@@ -133,7 +134,7 @@ export function DeputyPageClient({ id }: { id: number }) {
         </section>
 
         {/* Rankings from subgraph edges — zero extra API calls */}
-        {subgraphData && (
+        {subgraphData && focalKey && (
           <section>
             <h2 className="text-base font-semibold text-gray-900 mb-4">
               Rankings de Votação

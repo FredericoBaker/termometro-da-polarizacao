@@ -40,6 +40,10 @@ export function useSubgraph(id: number, params: GraphParams) {
         })
       }
 
+      // Resolve the focal node's graph key (node.key, not external_id)
+      const focalNode = data.nodes.find((n) => n.is_focal)
+      const focalKey = focalNode?.key ?? null
+
       for (const edge of data.edges) {
         if (!graph.hasNode(edge.source) || !graph.hasNode(edge.target)) continue
         if (graph.hasEdge(edge.source, edge.target)) continue
@@ -53,7 +57,7 @@ export function useSubgraph(id: number, params: GraphParams) {
         })
       }
 
-      return { graph, focalDeputyId: data.focal_deputy_id ?? id }
+      return { graph, focalDeputyId: data.focal_deputy_id ?? id, focalKey }
     },
   })
 }
