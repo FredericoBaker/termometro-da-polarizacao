@@ -12,7 +12,7 @@ export function useAvailableGraphs() {
   const legislatures = query.data?.graphs_by_granularity.legislature ?? []
 
   // O último da lista é o mais recente (a legislatura em curso)
-  const currentLegislature = legislatures.at(-1)?.legislature
+  const currentLegislature = legislatures.at(0)?.legislature
 
   return {
     ...query,

@@ -60,7 +60,7 @@ export function PeriodSelector({
     const nextEntries = available.graphs_by_granularity[next]
     if (nextEntries.length === 0) return
     // Seleciona automaticamente o período mais recente da nova granularidade
-    const latest = nextEntries[nextEntries.length - 1]
+    const latest = nextEntries[0]
     onChange(next, buildParams(next, entryToValue(latest)))
   }
 
