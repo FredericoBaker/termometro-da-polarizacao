@@ -134,15 +134,28 @@ export function getPartyColor(partyCode?: string | null): string {
 export function buildGraphologyGraph(data: GraphResponse): Graph {
   const graph = new Graph({ multi: false, type: 'undirected' })
 
+  // Sigma requires every node to have finite numeric x/y. Nodes whose
+  // positions are missing (null from the API) are placed at the centroid
+  // of the positioned nodes so they don't break the extent computation.
+  const positioned = data.nodes.filter(
+    (n) => typeof n.x === 'number' && typeof n.y === 'number',
+  )
+  const fallbackX =
+    positioned.length > 0
+      ? positioned.reduce((s, n) => s + (n.x as number), 0) / positioned.length
+      : 0
+  const fallbackY =
+    positioned.length > 0
+      ? positioned.reduce((s, n) => s + (n.y as number), 0) / positioned.length
+      : 0
+
   for (const node of data.nodes) {
     graph.addNode(node.key, {
-      // Atributos do Sigma
       label: node.label,
-      x: node.x,
-      y: node.y,
+      x: node.x ?? fallbackX,
+      y: node.y ?? fallbackY,
       size: node.is_focal ? 16 : 8,
       color: getPartyColor(node.party?.code),
-      // Dados extras para painel/tooltip (não usados pelo Sigma diretamente)
       deputyId: node.id,
       deputyName: node.name,
       stateCode: node.state_code,

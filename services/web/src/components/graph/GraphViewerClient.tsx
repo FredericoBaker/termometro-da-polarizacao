@@ -7,6 +7,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Plus, Minus, X } from 'lucide-react'
 
+import '@react-sigma/core/lib/style.css'
+
 import type { PartyResponse } from '@/types/api'
 import { formatNumber } from '@/lib/utils'
 
@@ -38,7 +40,6 @@ const SIGMA_SETTINGS = {
   labelRenderedSizeThreshold: 6,
   minCameraRatio: 0.05,
   maxCameraRatio: 4,
-  allowInvalidContainer: true,
 }
 
 // ─── Internal: event registration ────────────────────────────────────────────
@@ -74,38 +75,11 @@ function GraphBootstrap() {
   const sigma = useSigma()
 
   useEffect(() => {
-    const container = sigma.getContainer()
-    const camera = sigma.getCamera()
-
-    // Run after layout settles, then fit camera to avoid clustered nodes.
-    let raf1 = 0
-    let raf2 = 0
-    const syncAfterLayout = () => {
+    const raf = requestAnimationFrame(() => {
       sigma.refresh()
-      camera.animatedReset({ duration: 250 })
-    }
-
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(syncAfterLayout)
+      sigma.getCamera().animatedReset({ duration: 0 })
     })
-
-    const timeout = window.setTimeout(syncAfterLayout, 150)
-
-    const onResize = () => {
-      sigma.refresh()
-    }
-
-    window.addEventListener('resize', onResize)
-    const resizeObserver = new ResizeObserver(onResize)
-    resizeObserver.observe(container)
-
-    return () => {
-      cancelAnimationFrame(raf1)
-      cancelAnimationFrame(raf2)
-      window.clearTimeout(timeout)
-      window.removeEventListener('resize', onResize)
-      resizeObserver.disconnect()
-    }
+    return () => cancelAnimationFrame(raf)
   }, [sigma])
 
   return null

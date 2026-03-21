@@ -16,8 +16,8 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <MetricsCard />
         <PolarizationTimeseries />
-        <RankingsSection />
         <GraphTeaser />
+        <RankingsSection />
       </div>
     </PageContainer>
   )

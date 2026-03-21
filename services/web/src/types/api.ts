@@ -45,8 +45,8 @@ export interface NodeResponse {
   external_id: number
   photo_url: string | null
   party: PartyResponse | null
-  x: number
-  y: number
+  x: number | null
+  y: number | null
   is_focal?: boolean
 }
 
