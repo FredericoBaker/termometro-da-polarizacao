@@ -11,6 +11,7 @@ services:
       - certbot_certs:/etc/letsencrypt:ro
     depends_on:
       - api
+      - web
     restart: unless-stopped
 
   certbot:
@@ -65,6 +66,15 @@ services:
       - ./ops/postgres/run-migrations.sh:/scripts/run-migrations.sh:ro
     command: bash /scripts/run-migrations.sh
     restart: "no"
+
+  web:
+    build:
+      context: .
+      dockerfile: services/web/Dockerfile
+    container_name: termopol-web
+    depends_on:
+      - api
+    restart: unless-stopped
 
   api:
     build:
