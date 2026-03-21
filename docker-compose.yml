@@ -89,7 +89,7 @@ services:
     volumes:
       - ./services/api/src:/app/services/api/src:ro
       - ./libs/termopol_db/src:/libs/termopol_db/src:ro
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --root-path /api
 
 volumes:
   termopol_pgdata:
