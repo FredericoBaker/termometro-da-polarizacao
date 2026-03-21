@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+import { DeputyPageClient } from '@/components/deputado/DeputyPageClient'
+
+export const metadata: Metadata = {
+  title: 'Deputado',
+}
+
 export default async function DeputadoPage({
   params,
 }: {
@@ -5,11 +13,5 @@ export default async function DeputadoPage({
 }) {
   const { id } = await params
 
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-500">
-        Deputado {id} — em construção (Etapa 6).
-      </p>
-    </main>
-  )
+  return <DeputyPageClient id={parseInt(id)} />
 }
