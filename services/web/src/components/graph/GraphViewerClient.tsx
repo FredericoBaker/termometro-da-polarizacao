@@ -63,6 +63,26 @@ function GraphEvents({ onNodeClick, onEdgeClick, onStageClick }: GraphEventsProp
   return null
 }
 
+// ─── Internal: force re-render after mount ───────────────────────────────────
+//
+// Sigma reads the container's pixel dimensions at initialization. When using
+// CSS flex/calc heights, the container may have zero size at mount time (before
+// the browser has completed layout). Calling sigma.refresh() on the next frame
+// forces Sigma to re-measure the container and reposition all nodes correctly.
+
+function GraphBootstrap() {
+  const sigma = useSigma()
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      sigma.refresh()
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [sigma])
+
+  return null
+}
+
 // ─── Internal: zoom controls ──────────────────────────────────────────────────
 
 function ZoomControls() {
@@ -282,15 +302,17 @@ export default function GraphViewerClient({ graph }: { graph: Graph }) {
   }
 
   return (
-    <div className="flex h-full">
-      {/* Sigma */}
-      <div className="relative flex-1 overflow-hidden">
+    // absolute inset-0 is more reliable than h-full for children of flex-1 elements
+    <div className="absolute inset-0 flex">
+      {/* Sigma — fills remaining width after the side panel */}
+      <div className="relative flex-1">
         <SigmaContainer
           graph={graph}
           settings={SIGMA_SETTINGS}
-          style={{ height: '100%', width: '100%' }}
+          style={{ position: 'absolute', inset: 0 }}
           className="bg-gray-50"
         >
+          <GraphBootstrap />
           <GraphEvents
             onNodeClick={handleNodeClick}
             onEdgeClick={handleEdgeClick}
