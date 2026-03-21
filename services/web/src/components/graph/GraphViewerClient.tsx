@@ -74,10 +74,38 @@ function GraphBootstrap() {
   const sigma = useSigma()
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    const container = sigma.getContainer()
+    const camera = sigma.getCamera()
+
+    // Run after layout settles, then fit camera to avoid clustered nodes.
+    let raf1 = 0
+    let raf2 = 0
+    const syncAfterLayout = () => {
       sigma.refresh()
+      camera.animatedReset({ duration: 250 })
+    }
+
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(syncAfterLayout)
     })
-    return () => cancelAnimationFrame(raf)
+
+    const timeout = window.setTimeout(syncAfterLayout, 150)
+
+    const onResize = () => {
+      sigma.refresh()
+    }
+
+    window.addEventListener('resize', onResize)
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(container)
+
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+      window.clearTimeout(timeout)
+      window.removeEventListener('resize', onResize)
+      resizeObserver.disconnect()
+    }
   }, [sigma])
 
   return null
