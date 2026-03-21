@@ -98,6 +98,32 @@ docker compose up -d db
 docker compose run --rm db-migrations
 ```
 
+## Run Frontend Locally
+
+The web app lives in `services/web` (Next.js).
+
+### 1) Install dependencies
+
+```bash
+cd services/web
+npm install
+```
+
+### 2) Start dev server
+
+```bash
+npm run dev
+```
+
+Frontend should be available at:
+
+- `http://localhost:3000`
+
+Notes:
+
+- Run commands inside `services/web` (there is no `package.json` at repo root).
+- If you hit engine/dependency errors, use Node `20` LTS (`next@15` requires a newer Node 18+ runtime).
+
 ## Run Pipeline
 
 The production runner is:

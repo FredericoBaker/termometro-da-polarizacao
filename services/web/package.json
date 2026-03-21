@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node --env-file=../../.env node_modules/.bin/next dev",
+    "dev": "sh -c 'set -a; [ -f ../../.env ] && . ../../.env; set +a; next dev'",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@react-sigma/core": "^4.0.0",
-    "@tanstack/react-query": "^5.0.0",
+    "@react-sigma/core": "^5.0.6",
+    "@tanstack/react-query": "^5.94.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
-    "graphology": "^0.25.0",
+    "graphology": "^0.26.0",
     "graphology-types": "^0.24.0",
     "lucide-react": "^0.400.0",
     "next": "^15.0.0",

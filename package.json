@@ -1,0 +1,11 @@
+{
+  "name": "termometro-da-polarizacao",
+  "private": true,
+  "workspaces": [
+    "services/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w termopol-web",
+    "build": "npm run build -w termopol-web"
+  }
+}
