@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from api.dependencies import get_deputies_service
 from api.services import DeputiesService
 
-router = APIRouter(prefix="/api/v1/deputies", tags=["Deputies"])
+router = APIRouter(prefix="/v1/deputies", tags=["Deputies"])
 
 @router.get("/{deputy_id}")
 def get_deputy(

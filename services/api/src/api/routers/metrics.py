@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from api.dependencies import get_metrics_service
 from api.services import MetricsService
 
-router = APIRouter(prefix="/api/v1/metrics", tags=["Metrics"])
+router = APIRouter(prefix="/v1/metrics", tags=["Metrics"])
 
 @router.get("/")
 def get_current_metrics(

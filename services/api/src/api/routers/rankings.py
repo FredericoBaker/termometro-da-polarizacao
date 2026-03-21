@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from api.dependencies import get_rankings_service
 from api.services import RankingsService
 
-router = APIRouter(prefix="/api/v1/rankings", tags=["Rankings"])
+router = APIRouter(prefix="/v1/rankings", tags=["Rankings"])
 
 @router.get("/")
 def get_rankings(

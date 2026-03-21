@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from api.dependencies import get_graphs_service
 from api.services import GraphsService
 
-router = APIRouter(prefix="/api/v1/graphs", tags=["Graphs"])
+router = APIRouter(prefix="/v1/graphs", tags=["Graphs"])
 
 @router.get("/available")
 def get_available_graphs(
