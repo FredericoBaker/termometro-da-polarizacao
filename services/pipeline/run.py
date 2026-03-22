@@ -162,7 +162,7 @@ def run_graph() -> None:
 
 
 def run_metrics() -> None:
-    logger.info("Running all graph metrics (Backbone, Polarization, Layout)")
+    logger.info("Running all graph metrics (Backbone, Polarization, Layout, PageRank)")
     MetricsRunner().run_all()
     logger.info("All graph metrics completed")
 

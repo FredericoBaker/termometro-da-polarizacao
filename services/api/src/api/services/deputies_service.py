@@ -101,6 +101,55 @@ class DeputiesService:
         cache_key = self.cache.make_key("deputies:get_deputy:v1", deputy_id=deputy_id)
         return self.cache.get_or_set(cache_key, _build)
 
+    def search_deputies(self, query: str, limit: int = 8) -> list[dict]:
+        cache_key = self.cache.make_key(
+            "deputies:search_deputies:v1",
+            query=query,
+            limit=limit,
+        )
+
+        def _build() -> list[dict]:
+            query_text = query.strip()
+            if len(query_text) < 2:
+                return []
+
+            rows = self.deputy_repo.search_deputies_by_name(query_text, limit=limit)
+            deputy_ids = [row["id"] for row in rows]
+            latest_terms = self.deputy_repo.get_latest_terms_with_party_by_deputies(deputy_ids)
+            party_map = {row["deputy_id"]: row for row in latest_terms}
+
+            payload = []
+            for deputy in rows:
+                external_id = deputy.get("external_id")
+                party_row = party_map.get(deputy["id"])
+                payload.append(
+                    {
+                        "id": deputy["id"],
+                        "name": deputy.get("name"),
+                        "state_code": deputy.get("state_code"),
+                        "external_id": external_id,
+                        "photo_url": (
+                            f"https://www.camara.leg.br/internet/deputado/bandep/{external_id}.jpg"
+                            if external_id
+                            else None
+                        ),
+                        "party": (
+                            {
+                                "id": party_row.get("party_id"),
+                                "external_id": party_row.get("party_external_id"),
+                                "code": party_row.get("party_code"),
+                                "name": party_row.get("party_name"),
+                                "uri": party_row.get("party_uri"),
+                            }
+                            if party_row
+                            else None
+                        ),
+                    }
+                )
+            return payload
+
+        return self.cache.get_or_set(cache_key, _build)
+
     @staticmethod
     def _parse_month_identifier(month: str) -> date:
         formats = ("%Y-%m", "%m-%Y")
@@ -212,6 +261,7 @@ class DeputiesService:
                         ),
                         "x": pos.get("x") if pos else None,
                         "y": pos.get("y") if pos else None,
+                        "pagerank": pos.get("pagerank") if pos else None,
                         "is_focal": node_id == deputy_id,
                     }
                 )

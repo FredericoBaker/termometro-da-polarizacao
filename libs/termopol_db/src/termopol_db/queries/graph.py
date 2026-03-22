@@ -127,11 +127,12 @@ class GraphQueries:
     def upsert_node(schema: str) -> str:
         return f"""
             INSERT INTO {schema}.nodes 
-            (graph_id, deputy_id, x, y)
-            VALUES (%s, %s, %s, %s)
+            (graph_id, deputy_id, x, y, pagerank)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (graph_id, deputy_id) DO UPDATE
             SET x = EXCLUDED.x,
                 y = EXCLUDED.y,
+                pagerank = EXCLUDED.pagerank,
                 updated_at = now()
             RETURNING *;
         """
@@ -149,6 +150,26 @@ class GraphQueries:
             SELECT * FROM {schema}.nodes
             WHERE graph_id = %s
               AND deputy_id = ANY(%s::INTEGER[])
+        """
+
+    @staticmethod
+    def get_node_counts_by_graph_ids(schema: str) -> str:
+        return f"""
+            SELECT graph_id, COUNT(*)::INTEGER AS node_count
+            FROM {schema}.nodes
+            WHERE graph_id = ANY(%s::INTEGER[])
+            GROUP BY graph_id
+        """
+
+    @staticmethod
+    def update_node_pagerank(schema: str) -> str:
+        return f"""
+            UPDATE {schema}.nodes
+            SET pagerank = %s,
+                updated_at = now()
+            WHERE graph_id = %s
+              AND deputy_id = %s
+            RETURNING *;
         """
 
     # ===================== EDGES =====================

@@ -98,9 +98,16 @@ class GraphRepository(BaseRepository):
         query = GraphQueries.get_graph_voting_counts_by_graph_ids(self.schema)
         return self._execute_query(query, (graph_ids,), fetch_one=False)
 
-    def upsert_node(self, graph_id: int, deputy_id: int, x: float, y: float) -> Optional[Dict[str, Any]]:
+    def upsert_node(
+        self,
+        graph_id: int,
+        deputy_id: int,
+        x: float,
+        y: float,
+        pagerank: float | None = None,
+    ) -> Optional[Dict[str, Any]]:
         query = GraphQueries.upsert_node(self.schema)
-        params = (graph_id, deputy_id, x, y)
+        params = (graph_id, deputy_id, x, y, pagerank)
         return self._execute_query(query, params, fetch_one=True)
 
     def get_nodes(self, graph_id: int) -> List[Dict[str, Any]]:
@@ -112,6 +119,21 @@ class GraphRepository(BaseRepository):
             return []
         query = GraphQueries.get_nodes_by_deputies(self.schema)
         return self._execute_query(query, (graph_id, deputy_ids), fetch_one=False)
+
+    def get_node_counts_by_graph_ids(self, graph_ids: List[int]) -> List[Dict[str, Any]]:
+        if not graph_ids:
+            return []
+        query = GraphQueries.get_node_counts_by_graph_ids(self.schema)
+        return self._execute_query(query, (graph_ids,), fetch_one=False)
+
+    def update_node_pagerank(
+        self,
+        graph_id: int,
+        deputy_id: int,
+        pagerank: float,
+    ) -> Optional[Dict[str, Any]]:
+        query = GraphQueries.update_node_pagerank(self.schema)
+        return self._execute_query(query, (pagerank, graph_id, deputy_id), fetch_one=True)
 
 
 class EdgeRepository(BaseRepository):

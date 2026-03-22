@@ -95,7 +95,7 @@ class MetricsService:
         return self.graph_repo.get_graph_by_month(previous_month)
 
     @staticmethod
-    def _enrich_metric(metric: dict, voting_count: int) -> dict:
+    def _enrich_metric(metric: dict, voting_count: int, node_count: int) -> dict:
         triads_total = metric.get("triads_total", 0) or 0
         three_positive = metric.get("three_positive_triads", 0) or 0
         two_positive = metric.get("two_positive_triads", 0) or 0
@@ -116,6 +116,7 @@ class MetricsService:
             "unbalanced_triads_ratio": unbalanced_triads_ratio,
             "one_positive_share_among_balanced": one_positive_share_among_balanced,
             "voting_count": voting_count,
+            "node_count": node_count,
             "raw": metric,
         }
 
@@ -172,6 +173,8 @@ class MetricsService:
 
             voting_count_rows = self.graph_repo.get_graph_voting_counts_by_graph_ids(graph_ids)
             voting_count_by_graph_id = {row["graph_id"]: row["voting_count"] for row in voting_count_rows}
+            node_count_rows = self.graph_repo.get_node_counts_by_graph_ids(graph_ids)
+            node_count_by_graph_id = {row["graph_id"]: row["node_count"] for row in node_count_rows}
 
             previous_graph = self._get_previous_graph(graph, granularity)
             previous_metric_row = (
@@ -189,6 +192,7 @@ class MetricsService:
                     "metrics": self._enrich_metric(
                         current_metric_row,
                         voting_count_by_graph_id.get(graph["id"], 0),
+                        node_count_by_graph_id.get(graph["id"], 0),
                     ),
                 },
                 "previous": (
@@ -198,6 +202,7 @@ class MetricsService:
                         "metrics": self._enrich_metric(
                             previous_metric_row,
                             voting_count_by_graph_id.get(previous_graph["id"], 0),
+                            node_count_by_graph_id.get(previous_graph["id"], 0),
                         ),
                     }
                     if previous_graph and previous_metric_row
@@ -230,6 +235,11 @@ class MetricsService:
 
             filtered_graphs = [g for g in graphs if g["time_granularity_id"] == gran_id]
             filtered_graphs = self._sort_graphs_by_granularity(filtered_graphs, granularity, descending=False)
+            graph_ids = [g["id"] for g in filtered_graphs]
+            voting_count_rows = self.graph_repo.get_graph_voting_counts_by_graph_ids(graph_ids)
+            node_count_rows = self.graph_repo.get_node_counts_by_graph_ids(graph_ids)
+            voting_count_by_graph_id = {row["graph_id"]: row["voting_count"] for row in voting_count_rows}
+            node_count_by_graph_id = {row["graph_id"]: row["node_count"] for row in node_count_rows}
 
             history = []
             for graph in filtered_graphs:
@@ -238,7 +248,11 @@ class MetricsService:
                     history.append(
                         {
                             "graph": graph,
-                            "metrics": metric,
+                            "metrics": self._enrich_metric(
+                                metric,
+                                voting_count_by_graph_id.get(graph["id"], 0),
+                                node_count_by_graph_id.get(graph["id"], 0),
+                            ),
                         }
                     )
             return history

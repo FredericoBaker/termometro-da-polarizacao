@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE termopol.nodes
+    ADD COLUMN IF NOT EXISTS pagerank DOUBLE PRECISION;
+
+COMMIT;

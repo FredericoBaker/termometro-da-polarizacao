@@ -12,7 +12,6 @@ class LayoutMetrics:
     Compute spatial layout (x, y) coordinates for nodes in each graph.
     
     Uses Fruchterman-Reingold force directed algorithm.
-    Treats positive edges as attractive forces and negative edges as repulsive forces.
     """
 
     def __init__(self, iterations: int = 50, scale: float = 1000.0):
@@ -38,21 +37,17 @@ class LayoutMetrics:
             G.add_node(deputy_a)
             G.add_node(deputy_b)
             
-            # Since standard Fruchterman-Reingold doesn't handle negative weights well directly 
-            # in networkx, we will add edges where weight > 0 for attraction.
-            # Negative edges will be implicitly repulsed by the algorithm's global node repulsion.
             if w > 0:
                 G.add_edge(deputy_a, deputy_b, weight=w)
 
         pos = nx.spring_layout(G, weight="weight", iterations=self.iterations, scale=self.scale, seed=42)
-
         nodes_positioned = 0
         for node_id, (x, y) in pos.items():
             self.graph_repo.upsert_node(
                 graph_id=graph_id,
                 deputy_id=node_id,
                 x=float(x),
-                y=float(y)
+                y=float(y),
             )
             nodes_positioned += 1
 

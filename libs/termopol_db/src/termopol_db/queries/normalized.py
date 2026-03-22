@@ -82,6 +82,15 @@ class NormalizedQueries:
     @staticmethod
     def get_deputies_by_state(schema: str) -> str:
         return f"SELECT * FROM {schema}.deputies WHERE state_code = %s ORDER BY name"
+
+    @staticmethod
+    def search_deputies_by_name(schema: str) -> str:
+        return f"""
+            SELECT * FROM {schema}.deputies
+            WHERE name ILIKE %s
+            ORDER BY name
+            LIMIT %s
+        """
     
     # ===================== DEPUTIES LEGISLATURE TERMS =====================
     

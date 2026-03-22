@@ -144,6 +144,10 @@ class NormalizedDeputyRepository(BaseRepository):
         query = NormalizedQueries.get_deputies_by_state(self.schema)
         return self._execute_query(query, (state_code,), fetch_one=False)
 
+    def search_deputies_by_name(self, query_text: str, limit: int = 8) -> List[Dict[str, Any]]:
+        query = NormalizedQueries.search_deputies_by_name(self.schema)
+        return self._execute_query(query, (f"%{query_text}%", limit), fetch_one=False)
+
     def get_deputies_by_date_range(
         self,
         start_date: datetime,

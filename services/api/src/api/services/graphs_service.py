@@ -178,6 +178,7 @@ class GraphsService:
                         ),
                         "x": pos.get("x") if pos else None,
                         "y": pos.get("y") if pos else None,
+                        "pagerank": pos.get("pagerank") if pos else None,
                     }
                 )
 
