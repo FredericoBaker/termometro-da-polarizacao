@@ -5,6 +5,7 @@ import type {
   Granularity,
   GraphParams,
   GraphResponse,
+  LastUpdateResponse,
   MetricsResponse,
   RankingsResponse,
   TimeseriesItem,
@@ -88,4 +89,8 @@ export function fetchDeputiesSearch(
   limit = 8,
 ): Promise<DeputySearchResult[]> {
   return get('/deputies/search', { q: query, limit })
+}
+
+export function fetchLastUpdate(): Promise<LastUpdateResponse> {
+  return get('/health/last-update')
 }

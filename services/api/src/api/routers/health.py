@@ -8,3 +8,7 @@ router = APIRouter(prefix="/health", tags=["Health"])
 @router.get("/")
 def health_check(health_service: HealthService = Depends(get_health_service)):
     return health_service.health_check()
+
+@router.get("/last-update")
+def last_update(health_service: HealthService = Depends(get_health_service)):
+    return health_service.get_last_update()

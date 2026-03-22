@@ -12,12 +12,16 @@ export function HomeLivePolarization() {
 
   if (!current) return null
 
+  const degrees = current.metrics.polarization_index
+
   return (
-    <p className="text-sm text-gray-700">
-      <span className="font-semibold text-brand-900">
-        {formatPolarizationDegrees(current.metrics.polarization_index)}
-      </span>{' '}
-      na {current.graph.legislature}a legislatura
-    </p>
+    <div className="flex items-baseline gap-3">
+      <span className="text-5xl font-bold tabular-nums tracking-tight text-brand-900 sm:text-6xl">
+        {formatPolarizationDegrees(degrees)}
+      </span>
+      <span className="text-base text-gray-600">
+        na {current.graph.legislature}ª legislatura
+      </span>
+    </div>
   )
 }

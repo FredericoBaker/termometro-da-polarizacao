@@ -180,6 +180,10 @@ export interface RankingsResponse {
   top_disagreements: RankingEdge[]
 }
 
+export interface LastUpdateResponse {
+  last_updated_at: string | null
+}
+
 export interface DeputySearchResult {
   id: number
   name: string
