@@ -182,10 +182,9 @@ export function RankingsSection() {
 
   return (
     <section>
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-base font-semibold text-gray-900">
-          Rankings de Votação
+          Maiores Concordâncias e Disconcordâncias
         </h2>
         {available && !loadingAvailable && (
           <PeriodSelector
@@ -205,13 +204,13 @@ export function RankingsSection() {
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <RankingsColumn
-            title="Maiores Acordos"
+            title="Maiores Concordâncias"
             edges={topAgreements}
             type="agreement"
             isLoading={isLoading}
           />
           <RankingsColumn
-            title="Maiores Desacordos"
+            title="Maiores Disconcordâncias"
             edges={topDisagreements}
             type="disagreement"
             isLoading={isLoading}

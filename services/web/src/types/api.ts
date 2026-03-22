@@ -47,6 +47,7 @@ export interface NodeResponse {
   party: PartyResponse | null
   x: number | null
   y: number | null
+  pagerank?: number | null
   is_focal?: boolean
 }
 
@@ -104,6 +105,7 @@ export interface MetricsData {
   unbalanced_triads_ratio: number
   one_positive_share_among_balanced: number
   voting_count: number
+  node_count?: number
   raw: RawMetrics
 }
 
@@ -114,9 +116,9 @@ export interface MetricsPeriod {
 }
 
 export interface MetricsVariation {
-  delta_polarization_index: number
-  delta_polarization_index_pct: number
-  trend: 'up' | 'down' | 'stable'
+  delta_polarization_index: number | null
+  delta_polarization_index_pct: number | null
+  trend: 'up' | 'down' | 'stable' | 'no_previous' | 'unknown'
 }
 
 export interface MetricsResponse {
@@ -176,4 +178,13 @@ export interface RankingsResponse {
   graph: GraphMetaResponse
   top_agreements: RankingEdge[]
   top_disagreements: RankingEdge[]
+}
+
+export interface DeputySearchResult {
+  id: number
+  name: string
+  state_code: string
+  external_id: number | null
+  photo_url: string | null
+  party: PartyResponse | null
 }

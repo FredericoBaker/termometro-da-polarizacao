@@ -4,11 +4,20 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 45 13% 96%;
     --foreground: 222 47% 11%;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-canvas text-ink antialiased font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif tracking-tight;
   }
 }

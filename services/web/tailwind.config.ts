@@ -10,13 +10,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        polarization: {
-          low: '#3b82f6',
-          mid: '#eab308',
-          high: '#ef4444',
+        canvas: '#f6f6f3',
+        ink: '#111827',
+        brand: {
+          50: '#eef1f5',
+          100: '#d9e0ea',
+          700: '#1f3149',
+          800: '#17263a',
+          900: '#111b2a',
         },
-        agreement: '#16a34a',
-        disagreement: '#dc2626',
+        polarization: {
+          low: '#3a64a8',
+          mid: '#c88b1f',
+          high: '#a73737',
+        },
+        agreement: '#1f7a4f',
+        disagreement: '#b24040',
+      },
+      fontFamily: {
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
     },
   },

@@ -1,6 +1,7 @@
 import type {
   AvailableGraphsResponse,
   DeputyDetailResponse,
+  DeputySearchResult,
   Granularity,
   GraphParams,
   GraphResponse,
@@ -80,4 +81,11 @@ export function fetchSubgraph(
   params: GraphParams,
 ): Promise<GraphResponse> {
   return get(`/deputies/${id}/subgraph`, paramsToRecord(params))
+}
+
+export function fetchDeputiesSearch(
+  query: string,
+  limit = 8,
+): Promise<DeputySearchResult[]> {
+  return get('/deputies/search', { q: query, limit })
 }

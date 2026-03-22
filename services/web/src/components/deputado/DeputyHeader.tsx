@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 
 import type { DeputyResponse, LatestParty, LegislatureTerm } from '@/types/api'
 
@@ -8,9 +9,17 @@ interface DeputyHeaderProps {
   deputy: DeputyResponse
   terms: LegislatureTerm[]
   latestParty: LatestParty | null
+  selectedPeriodLabel?: string
+  focalPagerank?: number | null
 }
 
-export function DeputyHeader({ deputy, terms, latestParty }: DeputyHeaderProps) {
+export function DeputyHeader({
+  deputy,
+  terms,
+  latestParty,
+  selectedPeriodLabel,
+  focalPagerank,
+}: DeputyHeaderProps) {
   // Unique legislature numbers, sorted ascending
   const legislatures = Array.from(
     new Set(terms.map((t) => t.legislature_id)),
@@ -73,6 +82,28 @@ export function DeputyHeader({ deputy, terms, latestParty }: DeputyHeaderProps) 
           <p className="mt-2 text-xs text-gray-500">
             Última legislatura: {currentLegislature}ª (em andamento)
           </p>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+          <span className="rounded-full bg-gray-100 px-2.5 py-1">
+            {legislatures.length} legislaturas registradas
+          </span>
+          {typeof focalPagerank === 'number' && selectedPeriodLabel && (
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-900">
+              PageRank {focalPagerank.toFixed(5)} em {selectedPeriodLabel}
+            </span>
+          )}
+        </div>
+
+        {deputy.external_id && (
+          <Link
+            href={`https://www.camara.leg.br/deputados/${deputy.external_id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-block text-sm font-medium text-brand-800 underline decoration-brand-100 underline-offset-4"
+          >
+            Ver perfil oficial na Câmara
+          </Link>
         )}
       </div>
     </div>

@@ -7,12 +7,14 @@ import { clsx } from 'clsx'
 import { useAvailableGraphs } from '@/hooks/useAvailableGraphs'
 import { useMetrics } from '@/hooks/useMetrics'
 import {
-  formatPolarizationIndex,
+  formatPolarizationDegrees,
   formatPeriodLabel,
   formatNumber,
 } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
+import { PeriodSelector } from '@/components/ui/PeriodSelector'
+import type { Granularity, GraphParams } from '@/types/api'
 
 // ─── Gauge SVG ────────────────────────────────────────────────────────────────
 //
@@ -27,8 +29,11 @@ function PolarizationGauge({ value }: { value: number }) {
     setMounted(true)
   }, [])
 
-  // Inicia em 100 (arco vazio) e transiciona para o valor real ao montar
-  const dashoffset = mounted ? 100 - value * 100 : 100
+  const maxScale = 133.3
+  const clamped = Math.max(0, Math.min(value, maxScale))
+  const progress = (clamped / maxScale) * 100
+  const thresholdAt100 = (100 / maxScale) * 100
+  const dashoffset = mounted ? 100 - progress : 100
 
   return (
     <div className="relative mx-auto w-full max-w-[260px]">
@@ -75,7 +80,27 @@ function PolarizationGauge({ value }: { value: number }) {
           style={{ transition: 'stroke-dashoffset 0.9s ease-out' }}
         />
 
-        {/* Valor */}
+        <text
+          x="100"
+          y="14"
+          textAnchor="middle"
+          fill="#6b7280"
+          fontSize="10"
+          fontFamily="inherit"
+        >
+          referência 100°
+        </text>
+        <text
+          x={15 + (170 * thresholdAt100) / 100}
+          y="108"
+          textAnchor="middle"
+          fill="#9ca3af"
+          fontSize="10"
+          fontFamily="inherit"
+        >
+          |
+        </text>
+
         <text
           x="100"
           y="82"
@@ -85,10 +110,9 @@ function PolarizationGauge({ value }: { value: number }) {
           fontWeight="700"
           fontFamily="inherit"
         >
-          {formatPolarizationIndex(value)}
+          {formatPolarizationDegrees(value)}
         </text>
 
-        {/* Rótulo */}
         <text
           x="100"
           y="98"
@@ -97,7 +121,7 @@ function PolarizationGauge({ value }: { value: number }) {
           fontSize="9"
           fontFamily="inherit"
         >
-          índice de polarização
+          graus de polarização
         </text>
       </svg>
     </div>
@@ -142,10 +166,18 @@ function VariationBadge({
   trend,
   prevLabel,
 }: {
-  pct: number
-  trend: 'up' | 'down' | 'stable'
+  pct: number | null
+  trend: 'up' | 'down' | 'stable' | 'no_previous' | 'unknown'
   prevLabel: string
 }) {
+  if (pct === null || (trend !== 'up' && trend !== 'down' && trend !== 'stable')) {
+    return (
+      <div className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+        sem período anterior comparável
+      </div>
+    )
+  }
+
   const { Icon, className, sign } = TREND_CONFIG[trend]
 
   return (
@@ -167,10 +199,21 @@ function VariationBadge({
 // ─── MetricsCard ──────────────────────────────────────────────────────────────
 
 export function MetricsCard() {
-  const { currentLegislature, isLoading: loadingGraphs } = useAvailableGraphs()
+  const {
+    available,
+    currentLegislature,
+    isLoading: loadingGraphs,
+  } = useAvailableGraphs()
 
-  const params =
-    currentLegislature !== undefined ? { legislature: currentLegislature } : {}
+  const [granularity, setGranularity] = useState<Granularity>('legislature')
+  const [params, setParams] = useState<GraphParams>({})
+
+  const resolvedParams: GraphParams =
+    params.legislature === undefined &&
+    params.year === undefined &&
+    params.month === undefined
+      ? { legislature: currentLegislature }
+      : params
 
   const {
     current,
@@ -179,12 +222,12 @@ export function MetricsCard() {
     isLoading: loadingMetrics,
     isError,
     refetch,
-  } = useMetrics(params)
+  } = useMetrics(resolvedParams)
 
   const isLoading = loadingGraphs || loadingMetrics
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-lg border border-gray-300 bg-white p-6">
       {isLoading && (
         <div className="space-y-4 py-2">
           <Skeleton className="h-4 w-28" />
@@ -207,37 +250,47 @@ export function MetricsCard() {
 
       {!isLoading && !isError && current && (
         <>
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <h2 className="text-base font-semibold text-gray-900">
-              {formatPeriodLabel(current.graph)}
-            </h2>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                Graus de Polarização
+              </h2>
+              <p className="mt-0.5 text-sm text-gray-600">
+                {formatPeriodLabel(current.graph)}
+              </p>
+            </div>
 
-            {variation && previous && (
-              <VariationBadge
-                pct={variation.delta_polarization_index_pct}
-                trend={variation.trend}
-                prevLabel={formatPeriodLabel(previous.graph)}
+            {available && (
+              <PeriodSelector
+                available={available}
+                granularity={granularity}
+                params={resolvedParams}
+                onChange={(g, p) => {
+                  setGranularity(g)
+                  setParams(p)
+                }}
               />
             )}
           </div>
 
-          {/* Gauge */}
           <PolarizationGauge value={current.metrics.polarization_index} />
 
-          {/* Stats secundários */}
-          <div className="mt-4 grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100 pt-4">
+          <div className="mt-2 flex justify-center">
+            <VariationBadge
+              pct={variation?.delta_polarization_index_pct ?? null}
+              trend={variation?.trend ?? 'unknown'}
+              prevLabel={previous ? formatPeriodLabel(previous.graph) : 'período anterior'}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 divide-x divide-gray-100 border-t border-gray-100 pt-4 sm:grid-cols-2">
             <Stat
-              label="votações"
+              label="votações nominais"
               value={formatNumber(current.metrics.voting_count)}
             />
             <Stat
-              label="tríades"
-              value={formatNumber(current.metrics.triads_total)}
-            />
-            <Stat
-              label="equilibradas"
-              value={formatPolarizationIndex(current.metrics.balanced_triads_ratio)}
+              label="deputados na rede"
+              value={formatNumber(current.metrics.node_count ?? 0)}
             />
           </div>
         </>

@@ -9,7 +9,7 @@ import { useGraph } from '@/hooks/useGraph'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 const W = 600
-const H = 180
+const H = 280
 const PAD = 16
 
 function TeaserSvg({ graph }: { graph: Graph }) {
@@ -61,25 +61,21 @@ export function GraphTeaser() {
   const { data: graph, isLoading } = useGraph(params)
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="relative h-48 bg-gray-50">
-        {/* Static dot plot */}
+    <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+      <div className="relative h-72 bg-gray-100">
         {graph && <TeaserSvg graph={graph} />}
 
-        {/* Loading */}
         {isLoading && (
           <div className="flex h-full items-center justify-center">
             <LoadingSpinner />
           </div>
         )}
 
-        {/* Gradient overlay — fades the plot into a clean bottom strip */}
         <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent" />
 
-        {/* Bottom strip with title + CTA */}
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900">
               Grafo de Votações
             </h3>
             <p className="mt-0.5 text-xs text-gray-500">
@@ -90,7 +86,7 @@ export function GraphTeaser() {
           </div>
           <Link
             href="/grafo"
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-900"
           >
             Explorar grafo
             <ArrowRight className="h-3 w-3" />

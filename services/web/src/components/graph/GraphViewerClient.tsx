@@ -52,14 +52,21 @@ interface GraphEventsProps {
 
 function GraphEvents({ onNodeClick, onEdgeClick, onStageClick }: GraphEventsProps) {
   const registerEvents = useRegisterEvents()
+  const sigma = useSigma()
 
   useEffect(() => {
     registerEvents({
       clickNode: (e) => onNodeClick(e.node),
       clickEdge: (e) => onEdgeClick(e.edge),
       clickStage: () => onStageClick(),
+      enterNode: () => {
+        sigma.getContainer().style.cursor = 'pointer'
+      },
+      leaveNode: () => {
+        sigma.getContainer().style.cursor = 'default'
+      },
     })
-  }, [registerEvents, onNodeClick, onEdgeClick, onStageClick])
+  }, [registerEvents, onNodeClick, onEdgeClick, onStageClick, sigma])
 
   return null
 }
@@ -131,7 +138,7 @@ function NodePanel({ attrs, onClose }: { attrs: NodeAttrs; onClose: () => void }
     .join('')
 
   return (
-    <aside className="w-72 flex-none border-l border-gray-200 bg-white p-5 overflow-y-auto">
+    <aside className="h-full w-80 border-l border-gray-200 bg-white p-5 overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900">Deputado</h3>
         <button
@@ -170,7 +177,7 @@ function NodePanel({ attrs, onClose }: { attrs: NodeAttrs; onClose: () => void }
 
       <Link
         href={`/deputado/${attrs.deputyId}`}
-        className="block w-full rounded-lg bg-blue-600 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+        className="block w-full rounded-lg bg-brand-800 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-brand-900"
       >
         Ver perfil →
       </Link>
@@ -232,7 +239,7 @@ function EdgePanel({ attrs, sourceAttrs, targetAttrs, onClose }: EdgePanelProps)
   const isAgreement = attrs.wSigned > 0
 
   return (
-    <aside className="w-72 flex-none border-l border-gray-200 bg-white p-5 overflow-y-auto">
+    <aside className="h-full w-80 border-l border-gray-200 bg-white p-5 overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900">Relação</h3>
         <button
@@ -304,37 +311,36 @@ export default function GraphViewerClient({ graph }: { graph: Graph }) {
   }
 
   return (
-    // absolute inset-0 is more reliable than h-full for children of flex-1 elements
-    <div className="absolute inset-0 flex">
-      {/* Sigma — fills remaining width after the side panel */}
-      <div className="relative flex-1">
-        <SigmaContainer
-          graph={graph}
-          settings={SIGMA_SETTINGS}
-          style={{ position: 'absolute', inset: 0 }}
-          className="bg-gray-50"
-        >
-          <GraphBootstrap />
-          <GraphEvents
-            onNodeClick={handleNodeClick}
-            onEdgeClick={handleEdgeClick}
-            onStageClick={handleStageClick}
-          />
-          <ZoomControls />
-        </SigmaContainer>
-      </div>
-
-      {/* Side panel */}
-      {nodeAttrs && (
-        <NodePanel attrs={nodeAttrs} onClose={() => setSelectedNode(null)} />
-      )}
-      {edgeAttrs && sourceAttrs && targetAttrs && (
-        <EdgePanel
-          attrs={edgeAttrs}
-          sourceAttrs={sourceAttrs}
-          targetAttrs={targetAttrs}
-          onClose={() => setSelectedEdge(null)}
+    <div className="absolute inset-0">
+      <SigmaContainer
+        graph={graph}
+        settings={SIGMA_SETTINGS}
+        style={{ position: 'absolute', inset: 0 }}
+        className="bg-gray-100"
+      >
+        <GraphBootstrap />
+        <GraphEvents
+          onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
+          onStageClick={handleStageClick}
         />
+        <ZoomControls />
+      </SigmaContainer>
+
+      {(nodeAttrs || edgeAttrs) && (
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex">
+          <div className="pointer-events-auto">
+            {nodeAttrs && <NodePanel attrs={nodeAttrs} onClose={() => setSelectedNode(null)} />}
+            {edgeAttrs && sourceAttrs && targetAttrs && (
+              <EdgePanel
+                attrs={edgeAttrs}
+                sourceAttrs={sourceAttrs}
+                targetAttrs={targetAttrs}
+                onClose={() => setSelectedEdge(null)}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

@@ -70,8 +70,7 @@ export function PeriodSelector({
 
   return (
     <div className={clsx('flex flex-wrap items-center gap-2', className)}>
-      {/* Botões de granularidade */}
-      <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+      <div className="flex rounded-lg border border-gray-300 bg-white p-0.5">
         {(Object.keys(GRANULARITY_LABELS) as Granularity[]).map((g) => (
           <button
             key={g}
@@ -80,8 +79,8 @@ export function PeriodSelector({
             className={clsx(
               'rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
               g === granularity
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900',
+                ? 'bg-brand-50 text-brand-900'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
             )}
           >
             {GRANULARITY_LABELS[g]}
@@ -89,12 +88,11 @@ export function PeriodSelector({
         ))}
       </div>
 
-      {/* Dropdown de período */}
       {entries.length > 0 && (
         <select
           value={selected}
           onChange={(e) => handlePeriodChange(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700"
         >
           {entries.map((entry) => {
             const value = entryToValue(entry)

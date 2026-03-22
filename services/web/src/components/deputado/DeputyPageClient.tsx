@@ -11,6 +11,7 @@ import { PeriodSelector } from '@/components/ui/PeriodSelector'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { formatPeriodLabel } from '@/lib/utils'
 import type {
   AvailableGraphEntry,
   AvailableGraphsResponse,
@@ -76,12 +77,21 @@ export function DeputyPageClient({ id }: { id: number }) {
   // focalKey comes from the graph itself (node.key from API), not from deputy.external_id
   const focalKey = subgraphData?.focalKey ?? null
   const available = availableGraphs ? makeAvailableResponse(availableGraphs) : null
+  const focalPagerank =
+    focalKey && subgraphData?.graph.hasNode(focalKey)
+      ? ((subgraphData.graph.getNodeAttribute(focalKey, 'pagerank') as number | null) ?? null)
+      : null
 
   return (
     <PageContainer>
       <div className="flex flex-col gap-6 pb-12">
-        {/* Header */}
-        <DeputyHeader deputy={deputy} terms={terms} latestParty={latestParty} />
+        <DeputyHeader
+          deputy={deputy}
+          terms={terms}
+          latestParty={latestParty}
+          focalPagerank={focalPagerank}
+          selectedPeriodLabel={subgraphData ? formatPeriodLabel(subgraphData.graphMeta) : undefined}
+        />
 
         {/* Subgraph + period selector */}
         <section>

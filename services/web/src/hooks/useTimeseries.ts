@@ -8,6 +8,7 @@ export interface TimeseriesPoint {
   label: string
   value: number
   votingCount: number
+  nodeCount: number
   triadsTotal: number
   balancedRatio: number
 }
@@ -24,6 +25,7 @@ export function useTimeseries(granularity: Granularity) {
       label: formatPeriodLabel(item.graph),
       value: item.metrics.polarization_index,
       votingCount: item.metrics.voting_count,
+      nodeCount: item.metrics.node_count ?? 0,
       triadsTotal: item.metrics.triads_total,
       balancedRatio: item.metrics.balanced_triads_ratio,
     })) ?? []

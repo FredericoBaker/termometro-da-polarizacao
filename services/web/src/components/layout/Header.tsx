@@ -2,35 +2,29 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Thermometer } from 'lucide-react'
 import { clsx } from 'clsx'
+import { DeputySearch } from '@/components/layout/DeputySearch'
 
 const NAV_LINKS = [
-  { href: '/', label: 'Início' },
-  { href: '/dashboard', label: 'Painel' },
+  { href: '/', label: 'Visão Geral' },
+  { href: '/dashboard', label: 'Painel de Dados' },
   { href: '/grafo', label: 'Grafo' },
+  { href: '/#metodologia', label: 'Metodologia' },
 ]
 
 export function Header() {
   const pathname = usePathname()
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-gray-900 hover:text-blue-600 transition-colors"
-        >
-          <Thermometer className="h-5 w-5 text-blue-600" />
-          <span className="font-semibold text-sm sm:text-base leading-tight">
-            Termômetro da{' '}
-            <span className="text-blue-600">Polarização</span>
-          </span>
+    <header className="sticky top-0 z-50 w-full border-b border-gray-300 bg-canvas/95 backdrop-blur-sm">
+      <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
+        <Link href="/" className="text-ink transition-colors hover:text-brand-800">
+          <p className="text-lg font-semibold leading-tight sm:text-xl">
+            Termômetro da Polarização
+          </p>
         </Link>
 
-        {/* Navegação */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1.5">
           {NAV_LINKS.map(({ href, label }) => {
             const isActive =
               href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -40,10 +34,10 @@ export function Header() {
                 key={href}
                 href={href}
                 className={clsx(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                    ? 'bg-brand-50 text-brand-900'
+                    : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900',
                 )}
               >
                 {label}
@@ -51,6 +45,8 @@ export function Header() {
             )
           })}
         </nav>
+
+        <DeputySearch />
       </div>
     </header>
   )
