@@ -215,6 +215,7 @@ export function buildGraphologyGraph(data: GraphResponse): Graph {
       // Atributos do Sigma
       color: edge.w_signed > 0 ? '#16a34a' : '#dc2626',
       size: 0.6,
+      label: `${edge.w_signed > 0 ? '+' : ''}${edge.w_signed}`,
       // Dados extras para tooltip
       wSigned: edge.w_signed,
       absW: edge.abs_w,

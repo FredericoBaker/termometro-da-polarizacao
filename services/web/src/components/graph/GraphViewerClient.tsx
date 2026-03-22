@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { SigmaContainer, useRegisterEvents, useSigma } from '@react-sigma/core'
 import type Graph from 'graphology'
 import Image from 'next/image'
@@ -30,6 +30,7 @@ interface EdgeAttrs {
   absW: number
   isBackbone: boolean
   color: string
+  label?: string
 }
 
 // ─── Sigma settings ───────────────────────────────────────────────────────────
@@ -40,6 +41,42 @@ const SIGMA_SETTINGS = {
   labelRenderedSizeThreshold: 6,
   minCameraRatio: 0.05,
   maxCameraRatio: 4,
+}
+
+function PartyLegend({ graph }: { graph: Graph }) {
+  const partyCounts = new Map<string, { color: string; count: number }>()
+
+  graph.forEachNode((_node, attrs) => {
+    const code = (attrs.party?.code as string | undefined) ?? 'Sem partido'
+    const color = (attrs.color as string | undefined) ?? '#6B7280'
+    const current = partyCounts.get(code)
+    partyCounts.set(code, { color, count: (current?.count ?? 0) + 1 })
+  })
+
+  const topParties = [...partyCounts.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 5)
+
+  if (topParties.length === 0) return null
+
+  return (
+    <div className="absolute left-4 top-4 z-10 rounded-md border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur-sm">
+      <p className="mb-2 text-xs font-semibold text-gray-700">Partidos mais frequentes</p>
+      <div className="space-y-1.5">
+        {topParties.map(([code, data]) => (
+          <div key={code} className="flex items-center gap-2 text-xs text-gray-700">
+            <span
+              className="h-2.5 w-2.5 rounded-sm"
+              style={{ backgroundColor: data.color }}
+              aria-hidden="true"
+            />
+            <span className="min-w-[42px] font-medium">{code}</span>
+            <span className="text-gray-500">({data.count})</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // ─── Internal: event registration ────────────────────────────────────────────
@@ -155,13 +192,13 @@ function NodePanel({ attrs, onClose }: { attrs: NodeAttrs; onClose: () => void }
           <Image
             src={attrs.photoUrl}
             alt={attrs.deputyName}
-            width={80}
-            height={80}
-            className="rounded-full object-cover bg-gray-100"
+            width={256}
+            height={341}
+            className="h-[120px] w-[90px] rounded-md object-cover object-top bg-gray-100"
           />
         ) : (
           <div
-            className="h-20 w-20 rounded-full flex items-center justify-center text-xl font-bold"
+            className="flex h-[120px] w-[90px] items-center justify-center rounded-md text-xl font-bold"
             style={{ backgroundColor: attrs.color + '22', color: attrs.color }}
           >
             {initials}
@@ -208,13 +245,13 @@ function DeputyRow({ attrs }: { attrs: NodeAttrs }) {
         <Image
           src={attrs.photoUrl}
           alt={attrs.deputyName}
-          width={36}
-          height={36}
-          className="rounded-full object-cover bg-gray-100 flex-shrink-0"
+          width={256}
+          height={341}
+          className="h-12 w-[34px] rounded object-cover object-top bg-gray-100 flex-shrink-0"
         />
       ) : (
         <div
-          className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+          className="flex h-12 w-[34px] items-center justify-center rounded text-[10px] font-semibold flex-shrink-0"
           style={{ backgroundColor: attrs.color + '22', color: attrs.color }}
         >
           {initials}
@@ -279,6 +316,14 @@ function EdgePanel({ attrs, sourceAttrs, targetAttrs, onClose }: EdgePanelProps)
 export default function GraphViewerClient({ graph }: { graph: Graph }) {
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null)
+  const [showEdgeWeights, setShowEdgeWeights] = useState(false)
+  const sigmaSettings = useMemo(
+    () => ({
+      ...SIGMA_SETTINGS,
+      renderEdgeLabels: showEdgeWeights,
+    }),
+    [showEdgeWeights],
+  )
 
   const handleNodeClick = useCallback((node: string) => {
     setSelectedNode(node)
@@ -314,7 +359,7 @@ export default function GraphViewerClient({ graph }: { graph: Graph }) {
     <div className="absolute inset-0">
       <SigmaContainer
         graph={graph}
-        settings={SIGMA_SETTINGS}
+        settings={sigmaSettings}
         style={{ position: 'absolute', inset: 0 }}
         className="bg-gray-100"
       >
@@ -326,6 +371,16 @@ export default function GraphViewerClient({ graph }: { graph: Graph }) {
         />
         <ZoomControls />
       </SigmaContainer>
+
+      <PartyLegend graph={graph} />
+
+      <button
+        type="button"
+        onClick={() => setShowEdgeWeights((v) => !v)}
+        className="absolute right-4 top-4 z-10 rounded-md border border-gray-200 bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur-sm hover:bg-white"
+      >
+        {showEdgeWeights ? 'Ocultar pesos' : 'Mostrar pesos'}
+      </button>
 
       {(nodeAttrs || edgeAttrs) && (
         <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex">

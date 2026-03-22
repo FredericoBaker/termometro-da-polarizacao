@@ -67,13 +67,13 @@ function DeputyRow({
         <Image
           src={row.photoUrl}
           alt={row.deputyName}
-          width={32}
-          height={32}
-          className="h-8 w-8 rounded-full object-cover bg-gray-100 flex-shrink-0"
+          width={256}
+          height={341}
+          className="h-10 w-[30px] rounded object-cover object-top bg-gray-100 flex-shrink-0"
         />
       ) : (
         <div
-          className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+          className="flex h-10 w-[30px] items-center justify-center rounded text-[10px] font-semibold flex-shrink-0"
           style={{ backgroundColor: row.color + '22', color: row.color }}
         >
           {initials}
@@ -133,10 +133,10 @@ export function DeputyRankings({ graph, focalKey }: DeputyRankingsProps) {
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      {/* Acordos */}
+      {/* Concordâncias */}
       <div>
         <h3 className="text-sm font-semibold px-3 py-2 rounded-t-lg border border-green-200 bg-green-50 text-green-700">
-          Maiores Acordos
+          Maiores Concordâncias
         </h3>
         <div className="border border-t-0 border-gray-200 rounded-b-lg px-3 min-h-[100px]">
           {agreements.length === 0 ? (
@@ -154,10 +154,10 @@ export function DeputyRankings({ graph, focalKey }: DeputyRankingsProps) {
         </div>
       </div>
 
-      {/* Desacordos */}
+      {/* Disconcordâncias */}
       <div>
         <h3 className="text-sm font-semibold px-3 py-2 rounded-t-lg border border-red-200 bg-red-50 text-red-700">
-          Maiores Desacordos
+          Maiores Disconcordâncias
         </h3>
         <div className="border border-t-0 border-gray-200 rounded-b-lg px-3 min-h-[100px]">
           {disagreements.length === 0 ? (

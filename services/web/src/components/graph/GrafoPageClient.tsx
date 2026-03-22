@@ -29,7 +29,7 @@ export function GrafoPageClient() {
     // h-[calc(100vh-3.5rem)] = full viewport minus the sticky header (h-14 = 3.5rem)
     <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden">
       {/* Controls bar */}
-      <div className="flex-none border-b border-gray-200 bg-white px-4 py-2.5">
+      <div className="flex h-14 flex-none items-center border-b border-gray-200 bg-white px-4">
         {available ? (
           <PeriodSelector
             available={available}

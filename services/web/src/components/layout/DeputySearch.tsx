@@ -100,12 +100,12 @@ export function DeputySearch() {
                   <Image
                     src={deputy.photo_url}
                     alt={deputy.name}
-                    width={28}
-                    height={28}
-                    className="h-7 w-7 rounded-full object-cover bg-gray-100"
+                    width={256}
+                    height={341}
+                    className="h-10 w-[30px] rounded object-cover object-top bg-gray-100"
                   />
                 ) : (
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-900">
+                  <div className="flex h-10 w-[30px] items-center justify-center rounded bg-brand-50 text-[10px] font-semibold text-brand-900">
                     {getInitials(deputy.name)}
                   </div>
                 )}

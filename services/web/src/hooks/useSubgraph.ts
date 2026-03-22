@@ -12,33 +12,66 @@ function applyFocalLayout(graph: Graph, focalKey: string | null) {
   graph.setNodeAttribute(focalKey, 'y', 0)
   graph.setNodeAttribute(focalKey, 'size', 20)
 
-  const positive: string[] = []
-  const negative: string[] = []
-  const neutral: string[] = []
+  const neighbors: Array<{ key: string; wSigned: number; absW: number }> = []
 
   graph.forEachNeighbor(focalKey, (neighbor) => {
     const edge = graph.edge(focalKey, neighbor) ?? graph.edge(neighbor, focalKey)
     if (!edge) return
-    const w = graph.getEdgeAttribute(edge, 'wSigned') as number
-    if (w > 0) positive.push(neighbor)
-    else if (w < 0) negative.push(neighbor)
-    else neutral.push(neighbor)
+    const wSigned = graph.getEdgeAttribute(edge, 'wSigned') as number
+    const absW = graph.getEdgeAttribute(edge, 'absW') as number
+    neighbors.push({ key: neighbor, wSigned, absW })
   })
 
-  function place(nodes: string[], direction: 1 | -1, startY: number) {
-    if (nodes.length === 0) return
-    const spacing = 1.5
-    const offset = ((nodes.length - 1) * spacing) / 2
-    nodes.forEach((node, idx) => {
-      const y = startY + idx * spacing - offset
-      graph.setNodeAttribute(node, 'x', direction * (3 + (idx % 3) * 0.4))
-      graph.setNodeAttribute(node, 'y', y)
+  const positive = neighbors.filter((n) => n.wSigned > 0)
+  const negative = neighbors.filter((n) => n.wSigned < 0)
+  const neutral = neighbors.filter((n) => n.wSigned === 0)
+  const allAbs = neighbors.map((n) => n.absW)
+  const maxAbs = allAbs.length > 0 ? Math.max(...allAbs) : 1
+  const minAbs = allAbs.length > 0 ? Math.min(...allAbs) : 0
+
+  function normalized(absW: number): number {
+    if (maxAbs === minAbs) return 0.5
+    return (absW - minAbs) / (maxAbs - minAbs)
+  }
+
+  function placeHalfArc(
+    items: Array<{ key: string; absW: number }>,
+    start: number,
+    end: number,
+    minRadius: number,
+    maxRadius: number,
+  ) {
+    if (items.length === 0) return
+
+    const ordered = [...items].sort((a, b) => b.absW - a.absW)
+    ordered.forEach((item, idx) => {
+      const t = ordered.length === 1 ? 0.5 : idx / (ordered.length - 1)
+      const theta = start + t * (end - start) + idx * 0.08
+      const intensity = normalized(item.absW)
+      const radius = maxRadius - intensity * (maxRadius - minRadius)
+      const x = radius * Math.cos(theta)
+      const y = radius * Math.sin(theta)
+
+      graph.setNodeAttribute(item.key, 'x', x)
+      graph.setNodeAttribute(item.key, 'y', y)
+      graph.setNodeAttribute(item.key, 'size', 5 + intensity * 4)
     })
   }
 
-  place(positive, 1, 0)
-  place(negative, -1, 0)
-  place(neutral, 1, positive.length * 0.5 + 1.8)
+  // Concordâncias no semicírculo direito.
+  placeHalfArc(positive, -Math.PI / 2, Math.PI / 2, 2.0, 4.2)
+  // Discordâncias no semicírculo esquerdo (mais distantes em média).
+  placeHalfArc(negative, Math.PI / 2, (3 * Math.PI) / 2, 4.0, 7.0)
+
+  if (neutral.length > 0) {
+    neutral.forEach((item, idx) => {
+      const theta = (2 * Math.PI * idx) / neutral.length
+      const radius = 6.0 + idx * 0.2
+      graph.setNodeAttribute(item.key, 'x', radius * Math.cos(theta))
+      graph.setNodeAttribute(item.key, 'y', radius * Math.sin(theta))
+      graph.setNodeAttribute(item.key, 'size', 5)
+    })
+  }
 }
 
 export function useSubgraph(id: number, params: GraphParams) {
@@ -88,6 +121,7 @@ export function useSubgraph(id: number, params: GraphParams) {
         graph.addEdgeWithKey(edge.id, edge.source, edge.target, {
           color: edge.w_signed > 0 ? '#16a34a' : '#dc2626',
           size: 0.6,
+          label: `${edge.w_signed > 0 ? '+' : ''}${edge.w_signed}`,
           wSigned: edge.w_signed,
           absW: edge.abs_w,
           isBackbone: edge.is_backbone,

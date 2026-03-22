@@ -28,19 +28,19 @@ export function DeputyHeader({
   const currentLegislature = latestParty?.legislature
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-start sm:gap-5">
+    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:gap-5">
       {/* Photo */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 self-center sm:self-auto">
         {deputy.photo_url ? (
           <Image
             src={deputy.photo_url}
             alt={deputy.name}
-            width={96}
-            height={96}
-            className="rounded-full object-cover bg-gray-100 ring-4 ring-blue-100"
+            width={256}
+            height={341}
+            className="h-[128px] w-[96px] rounded-md object-cover object-top bg-gray-100 ring-2 ring-blue-100"
           />
         ) : (
-          <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-700 ring-4 ring-blue-100">
+          <div className="flex h-[128px] w-[96px] items-center justify-center rounded-md bg-blue-100 text-2xl font-bold text-blue-700 ring-2 ring-blue-100">
             {deputy.name
               .split(' ')
               .filter(Boolean)

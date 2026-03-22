@@ -28,9 +28,9 @@ function DeputyAvatar({ deputy }: { deputy: RankingDeputy }) {
       <Image
         src={deputy.photo_url}
         alt={deputy.name}
-        width={32}
-        height={32}
-        className="h-8 w-8 rounded-full object-cover bg-gray-100"
+        width={256}
+        height={341}
+        className="h-10 w-[30px] rounded object-cover object-top bg-gray-100"
         onError={(e) => {
           // Fallback to initials on broken image
           const target = e.currentTarget as HTMLImageElement
@@ -42,7 +42,7 @@ function DeputyAvatar({ deputy }: { deputy: RankingDeputy }) {
     )
   }
   return (
-    <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center flex-shrink-0">
+    <div className="flex h-10 w-[30px] items-center justify-center rounded bg-blue-100 text-[10px] font-semibold text-blue-700 flex-shrink-0">
       {initials(deputy.name)}
     </div>
   )
@@ -90,7 +90,7 @@ function DeputyPair({ deputy }: { deputy: RankingDeputy }) {
         {/* Initials fallback (hidden by default, shown on image error) */}
         {deputy.photo_url && (
           <div
-            className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold items-center justify-center flex-shrink-0 absolute inset-0 hidden"
+            className="absolute inset-0 hidden h-10 w-[30px] items-center justify-center rounded bg-blue-100 text-[10px] font-semibold text-blue-700 flex-shrink-0"
           >
             {initials(deputy.name)}
           </div>
