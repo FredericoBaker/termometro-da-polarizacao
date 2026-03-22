@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
+import { clsx } from 'clsx'
 
 import { fetchDeputiesSearch } from '@/lib/api'
 import type { DeputySearchResult } from '@/types/api'
@@ -18,7 +19,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function DeputySearch() {
+export function DeputySearch({ className }: { className?: string }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<DeputySearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -49,7 +50,7 @@ export function DeputySearch() {
   }, [trimmed])
 
   return (
-    <div className="relative w-full max-w-sm">
+    <div className={clsx('relative w-full max-w-sm', className)}>
       <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2">
         <Search className="h-4 w-4 text-gray-500" />
         <input
