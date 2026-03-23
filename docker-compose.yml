@@ -101,6 +101,33 @@ services:
       - ./libs/termopol_db/src:/libs/termopol_db/src:ro
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --root-path /api
 
+  pipeline-scheduler:
+    build:
+      context: .
+      dockerfile: services/pipeline/Dockerfile
+    container_name: termopol-pipeline-scheduler
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-termopol}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      PIPELINE_NOTIFY_EMAIL_TO: ${PIPELINE_NOTIFY_EMAIL_TO:-fredericodsbaker@gmail.com}
+      PIPELINE_SCHEDULE_CRON: ${PIPELINE_SCHEDULE_CRON:-0 3 * * *}
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    command: python services/pipeline/src/pipeline/scheduler.py
+
 volumes:
   termopol_pgdata:
   certbot_www:

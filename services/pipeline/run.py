@@ -1,32 +1,15 @@
-"""
-Production pipeline runner.
-
-Determines the data window automatically from the last successful execution
-recorded in termopol.ingestion_log, then runs all pipeline steps and persists
-the run result (completed / failed + error traceback) back to the DB.
-
-Usage examples:
-    # Normal daily run (auto window from last completed run)
-    python services/pipeline/run.py
-
-    # Override overlap (default 3 days)
-    python services/pipeline/run.py --overlap-days 7
-
-    # Force a specific window
-    python services/pipeline/run.py --start-date 2024-01-01 --end-date 2024-06-30
-
-    # Verbose logging
-    python services/pipeline/run.py --verbose
-"""
-
 import argparse
 import json
 import logging
+import os
+import smtplib
 import sys
 import time
 import traceback
 from datetime import UTC, datetime, timedelta
+from email.message import EmailMessage
 from pathlib import Path
+import ssl
 
 # Repo root is two levels up from this file (services/pipeline/run.py).
 _REPO_ROOT = Path(__file__).parent.parent.parent
@@ -82,6 +65,62 @@ def setup_logging(verbose: bool) -> None:
 
 def current_utc_naive() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
+
+
+def send_failure_email(
+    *,
+    start_date: datetime,
+    end_date: datetime,
+    overlap_days: int,
+    log_id: int | None,
+    error_msg: str,
+) -> None:
+    # Direct setup: SMTP with STARTTLS, email only on failure.
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_from = os.getenv("SMTP_FROM")
+    smtp_to = os.getenv("PIPELINE_NOTIFY_EMAIL_TO")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+
+    if not smtp_host or not smtp_from or not smtp_to:
+        logger.warning(
+            "Skipping failure email due to missing SMTP configuration",
+            extra={"required": ["SMTP_HOST", "SMTP_FROM", "PIPELINE_NOTIFY_EMAIL_TO"]},
+        )
+        return
+
+    subject = "[Termopol Pipeline] Execucao com erro"
+
+    lines = [
+        "Status: failed",
+        f"Log ID: {log_id}",
+        f"Inicio da janela: {start_date.isoformat()}",
+        f"Fim da janela: {end_date.isoformat()}",
+        f"Overlap days: {overlap_days}",
+        "",
+        "Erro:",
+        error_msg[:12000],
+    ]
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = smtp_from
+    msg["To"] = smtp_to
+    msg.set_content("\n".join(lines))
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+            server.ehlo()
+            server.starttls(context=ssl.create_default_context())
+            server.ehlo()
+            if smtp_user and smtp_password:
+                server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+
+        logger.info("Failure email sent", extra={"to": smtp_to})
+    except Exception:
+        logger.exception("Failed to send failure email", extra={"to": smtp_to})
 
 
 def parse_datetime(value: str) -> datetime:
@@ -274,6 +313,13 @@ def main() -> None:
     except Exception:
         error_msg = traceback.format_exc()
         log_repo.mark_failed(log_id, error_msg)
+        send_failure_email(
+            start_date=start_date,
+            end_date=end_date,
+            overlap_days=args.overlap_days,
+            log_id=log_id,
+            error_msg=error_msg,
+        )
         logger.exception(
             "Pipeline run failed; status recorded in ingestion_log",
             extra={"log_id": log_id},

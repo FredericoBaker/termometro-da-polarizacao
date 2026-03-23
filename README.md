@@ -24,6 +24,28 @@ Optional cache flags in `.env` (feature flags for tests):
 CACHE_BYPASS=0
 ```
 
+Optional pipeline email notification settings in `.env`:
+
+```env
+# Required to enable SMTP notifications on pipeline failure
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_FROM=alerts@termopol.com
+
+# Optional authentication
+SMTP_USER=alerts@termopol.com
+SMTP_PASSWORD=your-app-password
+
+# Defaults to fredericodsbaker@gmail.com
+PIPELINE_NOTIFY_EMAIL_TO=fredericodsbaker@gmail.com
+
+# Scheduler in UTC using cron syntax
+# Daily 03:00 UTC:
+PIPELINE_SCHEDULE_CRON=0 3 * * *
+# Weekly Sunday 03:00 UTC:
+# PIPELINE_SCHEDULE_CRON=0 3 * * 0
+```
+
 ## Run Database, Redis and API with Docker
 
 From repository root:
@@ -167,3 +189,12 @@ python services/pipeline/run.py --start-date 2024-01-01 --end-date 2024-06-30
 # Verbose logs
 python services/pipeline/run.py --verbose
 ```
+
+## Automatic daily pipeline (no manual cron)
+
+When you start the stack, `pipeline-scheduler` runs continuously and triggers
+the pipeline based on `PIPELINE_SCHEDULE_CRON` (cron syntax, UTC).
+
+- Daily at 03:00 UTC: `PIPELINE_SCHEDULE_CRON=0 3 * * *`
+- Weekly on Sunday 03:00 UTC: `PIPELINE_SCHEDULE_CRON=0 3 * * 0`
+- Failure notifications are sent by email (with traceback) via SMTP STARTTLS.
