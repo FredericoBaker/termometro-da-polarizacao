@@ -184,7 +184,7 @@ export function RankingsSection() {
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-base font-semibold text-gray-900">
-          Maiores Concordâncias e Disconcordâncias
+          Maiores Concordâncias e Discordâncias
         </h2>
         {available && !loadingAvailable && (
           <PeriodSelector
@@ -210,7 +210,7 @@ export function RankingsSection() {
             isLoading={isLoading}
           />
           <RankingsColumn
-            title="Maiores Disconcordâncias"
+            title="Maiores Discordâncias"
             edges={topDisagreements}
             type="disagreement"
             isLoading={isLoading}

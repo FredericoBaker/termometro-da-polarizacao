@@ -10,11 +10,12 @@ logger = logging.getLogger(__name__)
 
 class BackboneMetrics:
     """
-    Compute disparity filter fractions p_ij for each edge in each graph.
+    Compute the backbone of each graph using the disparity filter (Serrano et al. 2009).
 
-    For an edge (i, j) from i's perspective, we compute:
-        p_ij = |w_ij| / sum_k |w_ik|
-    where the denominator is the node strength (absolute weighted degree).
+    Positive and negative edges are filtered independently: p_ij values and node
+    degrees are computed within each sign subgraph, the disparity test is applied
+    separately, and the surviving edges are combined before evaluating the
+    largest connected component ratio.
     """
 
     def __init__(
@@ -40,12 +41,16 @@ class BackboneMetrics:
             return {"updated_p_values": updated_p_values, "backbone_edges": 0}
 
         node_ids = self._extract_node_ids(edges)
-        degree_by_node = self._compute_degrees(edges)
+        pos_edges, neg_edges = self._split_by_sign(edges)
+        pos_degrees = self._compute_degrees(pos_edges)
+        neg_degrees = self._compute_degrees(neg_edges)
 
         best_alpha, best_pairs, best_ratio = self._find_alpha_and_backbone_pairs(
-            edges=edges,
+            pos_edges=pos_edges,
+            neg_edges=neg_edges,
             node_ids=node_ids,
-            degree_by_node=degree_by_node,
+            pos_degrees=pos_degrees,
+            neg_degrees=neg_degrees,
         )
 
         self.edge_repo.reset_backbone_flags(graph_id)
@@ -71,23 +76,27 @@ class BackboneMetrics:
             logger.info("No edges found for graph", extra={"graph_id": graph_id})
             return 0
 
-        strengths = defaultdict(float)
-        for edge in edges:
-            w_abs = self._absolute_weight(edge)
-            deputy_a = edge["deputy_a"]
-            deputy_b = edge["deputy_b"]
-            strengths[deputy_a] += w_abs
-            strengths[deputy_b] += w_abs
+        pos_edges, neg_edges = self._split_by_sign(edges)
+        pos_strengths = self._compute_strengths(pos_edges)
+        neg_strengths = self._compute_strengths(neg_edges)
 
-        update_rows = []
-        for edge in edges:
+        update_rows: List[Tuple[int, int, int, float, float]] = []
+
+        for edge in pos_edges:
             deputy_a = edge["deputy_a"]
             deputy_b = edge["deputy_b"]
             w_abs = self._absolute_weight(edge)
+            p_a = w_abs / pos_strengths[deputy_a] if pos_strengths[deputy_a] > 0 else 0.0
+            p_b = w_abs / pos_strengths[deputy_b] if pos_strengths[deputy_b] > 0 else 0.0
+            update_rows.append((graph_id, deputy_a, deputy_b, p_a, p_b))
 
-            p_deputy_a = w_abs / strengths[deputy_a] if strengths[deputy_a] > 0 else 0.0
-            p_deputy_b = w_abs / strengths[deputy_b] if strengths[deputy_b] > 0 else 0.0
-            update_rows.append((graph_id, deputy_a, deputy_b, p_deputy_a, p_deputy_b))
+        for edge in neg_edges:
+            deputy_a = edge["deputy_a"]
+            deputy_b = edge["deputy_b"]
+            w_abs = self._absolute_weight(edge)
+            p_a = w_abs / neg_strengths[deputy_a] if neg_strengths[deputy_a] > 0 else 0.0
+            p_b = w_abs / neg_strengths[deputy_b] if neg_strengths[deputy_b] > 0 else 0.0
+            update_rows.append((graph_id, deputy_a, deputy_b, p_a, p_b))
 
         updated_edges = self.edge_repo.bulk_update_edge_p_values(
             update_rows,
@@ -102,24 +111,33 @@ class BackboneMetrics:
 
     def _find_alpha_and_backbone_pairs(
         self,
-        edges: List[Dict[str, Any]],
+        pos_edges: List[Dict[str, Any]],
+        neg_edges: List[Dict[str, Any]],
         node_ids: List[int],
-        degree_by_node: Dict[int, int],
+        pos_degrees: Dict[int, int],
+        neg_degrees: Dict[int, int],
     ) -> Tuple[float, List[Tuple[int, int]], float]:
         low = self.alpha_min
         high = self.alpha_max
         best_alpha = self.alpha_max
-        best_pairs = self._select_backbone_pairs(edges, degree_by_node, self.alpha_max)
+        best_pairs = self._select_combined_backbone_pairs(
+            pos_edges, neg_edges, pos_degrees, neg_degrees, self.alpha_max,
+        )
         best_ratio = self._largest_component_ratio(node_ids, best_pairs)
         found_feasible = best_ratio >= self.target_lcc_ratio
 
         for _ in range(self.max_alpha_iterations):
             mid = (low + high) / 2.0
-            candidate_pairs = self._select_backbone_pairs(edges, degree_by_node, mid)
+            candidate_pairs = self._select_combined_backbone_pairs(
+                pos_edges,
+                neg_edges,
+                pos_degrees,
+                neg_degrees,
+                mid,
+            )
             candidate_ratio = self._largest_component_ratio(node_ids, candidate_pairs)
 
             if candidate_ratio >= self.target_lcc_ratio:
-                # Keep the smallest feasible alpha to maximize pruning.
                 found_feasible = True
                 best_alpha = mid
                 best_pairs = candidate_pairs
@@ -143,6 +161,18 @@ class BackboneMetrics:
             )
 
         return best_alpha, best_pairs, best_ratio
+
+    def _select_combined_backbone_pairs(
+        self,
+        pos_edges: List[Dict[str, Any]],
+        neg_edges: List[Dict[str, Any]],
+        pos_degrees: Dict[int, int],
+        neg_degrees: Dict[int, int],
+        alpha: float,
+    ) -> List[Tuple[int, int]]:
+        pos_pairs = self._select_backbone_pairs(pos_edges, pos_degrees, alpha)
+        neg_pairs = self._select_backbone_pairs(neg_edges, neg_degrees, alpha)
+        return pos_pairs + neg_pairs
 
     def _select_backbone_pairs(
         self,
@@ -176,11 +206,33 @@ class BackboneMetrics:
 
     @staticmethod
     def _passes_disparity(p_ij: float, node_degree: int, alpha: float) -> bool:
-        # If degree <= 1, the edge is the only local connection for that node.
         if node_degree <= 1:
             return True
         threshold = 1.0 - (alpha ** (1.0 / (node_degree - 1)))
         return p_ij > threshold
+
+    @staticmethod
+    def _split_by_sign(
+        edges: List[Dict[str, Any]],
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        pos_edges: List[Dict[str, Any]] = []
+        neg_edges: List[Dict[str, Any]] = []
+        for edge in edges:
+            w_signed = float(edge.get("w_signed", 0.0))
+            if w_signed >= 0:
+                pos_edges.append(edge)
+            else:
+                neg_edges.append(edge)
+        return pos_edges, neg_edges
+
+    @staticmethod
+    def _compute_strengths(edges: List[Dict[str, Any]]) -> Dict[int, float]:
+        strengths: Dict[int, float] = defaultdict(float)
+        for edge in edges:
+            w_abs = BackboneMetrics._absolute_weight(edge)
+            strengths[edge["deputy_a"]] += w_abs
+            strengths[edge["deputy_b"]] += w_abs
+        return strengths
 
     @staticmethod
     def _extract_node_ids(edges: List[Dict[str, Any]]) -> List[int]:
@@ -209,7 +261,10 @@ class BackboneMetrics:
         if graph.number_of_nodes() == 0:
             return 0.0
 
-        largest_cc_size = max((len(component) for component in nx.connected_components(graph)), default=0)
+        largest_cc_size = max(
+            (len(component) for component in nx.connected_components(graph)),
+            default=0,
+        )
         return largest_cc_size / float(graph.number_of_nodes())
 
     @staticmethod

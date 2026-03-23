@@ -154,10 +154,10 @@ export function DeputyRankings({ graph, focalKey }: DeputyRankingsProps) {
         </div>
       </div>
 
-      {/* Disconcordâncias */}
+      {/* Discordâncias */}
       <div>
         <h3 className="text-sm font-semibold px-3 py-2 rounded-t-lg border border-red-200 bg-red-50 text-red-700">
-          Maiores Disconcordâncias
+          Maiores Discordâncias
         </h3>
         <div className="border border-t-0 border-gray-200 rounded-b-lg px-3 min-h-[100px]">
           {disagreements.length === 0 ? (

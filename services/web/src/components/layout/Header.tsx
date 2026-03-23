@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { href: '/', label: 'Visão Geral', mobileLabel: 'Início' },
   { href: '/dashboard', label: 'Painel de Dados', mobileLabel: 'Painel' },
   { href: '/grafo', label: 'Grafo', mobileLabel: 'Grafo' },
-  { href: '/#metodologia', label: 'Metodologia', mobileLabel: 'Método' },
 ]
 
 export function Header() {

@@ -34,7 +34,7 @@ export default function HomePage() {
               <p className="max-w-2xl text-lg leading-relaxed text-gray-700">
                 O Termômetro da Polarização analisa{' '}
                 <strong>votações nominais na Câmara dos Deputados</strong> para
-                revelar como alianças e antagonismos se formam entre
+                entender como alianças e antagonismos se formam entre
                 parlamentares. Sem análise de discurso, sem interpretação
                 subjetiva, apenas o comportamento real de voto.
               </p>
@@ -86,7 +86,7 @@ export default function HomePage() {
       <section className="bg-white">
         <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
           <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-            Como isso funciona?
+            Como funciona?
           </h2>
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-gray-700">
             A cada semana, deputados votam proposições no plenário da Câmara.
@@ -102,17 +102,17 @@ export default function HomePage() {
             <StepCard
               step="1"
               title="Votações nominais"
-              description="São considerados os votos registrados individualmente na Câmara dos Deputados, o único tipo de votação em que é possível identificar exatamente como cada deputado votou."
+              description="São considerados os votos registrados individualmente na Câmara dos Deputados, o único tipo de votação em que é possível identificar exatamente como cada deputado votou são as nominais."
             />
             <StepCard
               step="2"
               title="Rede de concordância"
-              description="Para cada par de deputados, é calculado um peso: positivo quando tendem a votar juntos, negativo quando tendem a discordar. Isso forma uma rede com conexões positivas e negativas."
+              description="Para cada par de deputados, é calculado um peso: positivo quando tendem a votar de forma parecida, negativo quando tendem a discordar. Isso forma uma rede com conexões positivas e negativas."
             />
             <StepCard
               step="3"
               title="Graus de polarização"
-              description="Os padrões de triângulos da rede são analisados para medir quanto os deputados se organizam em blocos antagônicos. Quanto mais estruturada a oposição, maior a polarização."
+              description="Os padrões de triângulos de relacionamentos da rede são analisados para medir quanto os deputados se organizam em blocos antagônicos. Quanto mais estruturada a oposição, maior a polarização."
             />
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function HomePage() {
           </h2>
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-gray-700">
             Para medir polarização, olhamos para os{' '}
-            <strong>triângulos</strong> da rede, que é qualquer trio de deputados que
+            <strong>triângulos de relacionamentos</strong> da rede, que é qualquer trio de deputados que
             estejam todos conectados entre si. A combinação de sinais positivos
             e negativos nas três conexões de cada triângulo indica se a relação
             entre eles é estável ou instável.
@@ -210,13 +210,13 @@ export default function HomePage() {
                   <span className="font-mono font-semibold text-agreement">
                     + + +
                   </span>{' '}
-                  — Três deputados que concordam entre si. Uma aliança coesa.
+                   Três deputados que concordam entre si. Uma aliança coesa.
                 </p>
                 <p>
                   <span className="font-mono font-semibold text-disagreement">
                     + − −
                   </span>{' '}
-                  — Dois deputados aliados se opõem a um terceiro. Este é o
+                   Dois deputados aliados se opõem a um terceiro. Este é o
                   triângulo{' '}
                   <strong className="text-gray-900">polarizado</strong>: indica
                   a formação de blocos antagônicos.
@@ -232,13 +232,13 @@ export default function HomePage() {
                   <span className="font-mono font-semibold text-gray-500">
                     + + −
                   </span>{' '}
-                  — Duas alianças que se contradizem. Estruturalmente instável.
+                   Duas alianças que se contradizem. Estruturalmente instável.
                 </p>
                 <p>
                   <span className="font-mono font-semibold text-gray-500">
                     − − −
                   </span>{' '}
-                  — Três opositores mútuos. Raro e incoerente.
+                   Três opositores mútuos. Raro e incoerente.
                 </p>
               </div>
             </div>
@@ -263,7 +263,7 @@ export default function HomePage() {
             <p>
               É possível ultrapassar 100°. Redes reais, por não serem completas,
               podem apresentar proporções de triângulos polarizados superiores a
-              75%, gerando valores acima do referencial.
+              75%, gerando valores acima desse referencial.
             </p>
           </div>
 
