@@ -13,12 +13,26 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
         with:
           host: 159.89.232.157
+          script_stop: true
           username: root
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: PROD_ENV_FILE
           script: |
-            cd /code/termometro-da-polarizacao
+            python3 - <<'PY'
+            from pathlib import Path
+            import os
+
+            env_content = os.environ.get("PROD_ENV_FILE", "")
+            if not env_content:
+                raise RuntimeError("Missing PROD_ENV_FILE secret")
+
+            Path("/root/code/termometro-da-polarizacao/.env").write_text(env_content)
+            PY
+            cd /root/code/termometro-da-polarizacao
             git pull origin main
             docker compose up -d --build
             docker image prune -f

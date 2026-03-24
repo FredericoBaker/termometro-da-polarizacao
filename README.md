@@ -1,200 +1,75 @@
-# termometro-da-polarizacao
+# Termômetro da Polarização
 
-## Prerequisites
+Este repositório é um projeto que acompanha a polarização política na Câmara dos Deputados a partir de votos nominais.  
+A ideia é medir comportamento real de votação, transformar isso em rede e disponibilizar os resultados em API, dashboard e grafo interativo.
 
-- Docker + Docker Compose
-- Python 3.12+ (for local pipeline execution)
-- A configured `.env` file at project root
+Artigo: [Quantificando Polarização, Coesão e Permeabilidade na Câmara dos Deputados do Brasil (WebMedia 2025)](https://sol.sbc.org.br/index.php/webmedia/article/view/37984).
 
-Expected DB env vars in `.env`:
+## Metodologia
 
-```env
-POSTGRES_DB=termopol
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=admin
-POSTGRES_PORT=5432
-POSTGRES_HOST=localhost
-POSTGRES_SCHEMA=termopol
-```
+- Cada deputado é um nó da rede.
+- Para cada par de deputados:
+  - se votam igual, a conexão soma `+1`;
+  - se votam diferente, a conexão soma `-1`.
+- Com o acúmulo das votações, surge uma rede com arestas positivas (concordância) e negativas (discordância).
+- O pipeline aplica filtros e métricas para destacar estrutura política da rede, incluindo backbone, layout, PageRank e índice de polarização por triângulos de relação.
 
-Optional cache flags in `.env` (feature flags for tests):
+Em termos práticos: quanto mais a rede se organiza em blocos opostos e coesos, maior a polarização estrutural.
 
-```env
-# Disable cache globally (0 or 1)
-CACHE_BYPASS=0
-```
+## Organização do projeto
 
-Optional pipeline email notification settings in `.env`:
+- `services/`
+  - `web`: frontend
+  - `api`: API
+  - `pipeline`: ingestão, transformação, construção dos grafos e cálculo das métricas
+- `libs/`
+  - `termopol_db`: camada de acesso ao banco (queries e repositórios)
+- `ops/`
+  - infraestrutura e operação (nginx, postgres, migrations e scripts de deploy)
 
-```env
-# Required to enable SMTP notifications on pipeline failure
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_FROM=alerts@termopol.com
+## Subindo o projeto com Docker
 
-# Optional authentication
-SMTP_USER=alerts@termopol.com
-SMTP_PASSWORD=your-app-password
-
-# Defaults to fredericodsbaker@gmail.com
-PIPELINE_NOTIFY_EMAIL_TO=fredericodsbaker@gmail.com
-
-# Scheduler in UTC using cron syntax
-# Daily 03:00 UTC:
-PIPELINE_SCHEDULE_CRON=0 3 * * *
-# Weekly Sunday 03:00 UTC:
-# PIPELINE_SCHEDULE_CRON=0 3 * * 0
-```
-
-## Run Database, Redis and API with Docker
-
-From repository root:
+Na raiz do repositório:
 
 ```bash
-docker compose up -d redis db api
+docker compose up -d --build
 ```
 
-The startup flow includes a migration runner (`db-migrations`) that applies all SQL files in `ops/postgres/migrations` before the API starts.
+Principais serviços:
 
-Useful checks:
+- Web: `http://localhost:3000`
+- API: `http://localhost:8000`
+- Docs da API: `http://localhost:8000/docs`
 
-```bash
-docker compose ps
-docker compose logs -f redis
-docker compose logs -f db
-docker compose logs -f api
-```
-
-The API uses Redis as a cache layer with a default TTL of 1 day (`86400s`).
-You can bypass cache for tests using `.env`:
-
-- `CACHE_BYPASS=1` (disable cache)
-- `CACHE_BYPASS=0` (enable cache)
-
-API should be available at:
-
-- `http://localhost:8000`
-- `http://localhost:8000/docs`
-
-Health check:
-
-```bash
-curl http://localhost:8000/health/
-```
-
-Access Postgres shell:
-
-```bash
-docker exec -it termopol-db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
-```
-
-Stop services:
-
-```bash
-docker compose stop redis db api
-```
-
-Remove containers (keep DB volume):
+Para parar:
 
 ```bash
 docker compose down
 ```
 
-Reset database (remove volume and reinitialize schema):
+## Variáveis essenciais no `.env`
 
-```bash
-docker compose down -v --remove-orphans
-docker compose up -d redis db api
+```env
+# Banco
+POSTGRES_DB=termopol
+POSTGRES_USER=...
+POSTGRES_PASSWORD=...
+POSTGRES_PORT=5432
+POSTGRES_HOST=...
+POSTGRES_SCHEMA=termopol
+
+PIPELINE_SCHEDULE_CRON="0 3 * * *"
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_FROM=email
+SMTP_USER=email
+SMTP_PASSWORD=password
+PIPELINE_NOTIFY_EMAIL_TO=email
 ```
 
-## Database Migrations (Incremental)
-
-- Keep `ops/postgres/init.sql` as bootstrap for brand new volumes only.
-- Put every schema change in a new SQL file under `ops/postgres/migrations`.
-- Migrations run automatically via `db-migrations` when you start the stack.
-
-Run migrations manually (without starting API):
+## Rodando o pipeline manualmente
 
 ```bash
-docker compose up -d db
-docker compose run --rm db-migrations
-```
-
-## Run Frontend Locally
-
-The web app lives in `services/web` (Next.js).
-
-### 1) Install dependencies
-
-```bash
-cd services/web
-npm install
-```
-
-### 2) Start dev server
-
-```bash
-npm run dev
-```
-
-Frontend should be available at:
-
-- `http://localhost:3000`
-
-Notes:
-
-- Run commands inside `services/web` (there is no `package.json` at repo root).
-- If you hit engine/dependency errors, use Node `20` LTS (`next@15` requires a newer Node 18+ runtime).
-
-## Run Pipeline
-
-The production runner is:
-
-- `services/pipeline/run.py`
-
-It automatically:
-
-- Determines execution window from `ingestion_log`
-- Applies overlap (default `3` days)
-- Runs ingest -> transform -> graph -> metrics
-- Persists run status as `in_progress` / `completed` / `failed`
-
-### 1) Install pipeline dependencies
-
-```bash
-cd services/pipeline
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2) Execute pipeline
-
-From repository root:
-
-```bash
-source services/pipeline/.venv/bin/activate
 python services/pipeline/run.py
 ```
-
-Common options:
-
-```bash
-# Increase overlap window
-python services/pipeline/run.py --overlap-days 7
-
-# Force a specific period
-python services/pipeline/run.py --start-date 2024-01-01 --end-date 2024-06-30
-
-# Verbose logs
-python services/pipeline/run.py --verbose
-```
-
-## Automatic daily pipeline (no manual cron)
-
-When you start the stack, `pipeline-scheduler` runs continuously and triggers
-the pipeline based on `PIPELINE_SCHEDULE_CRON` (cron syntax, UTC).
-
-- Daily at 03:00 UTC: `PIPELINE_SCHEDULE_CRON=0 3 * * *`
-- Weekly on Sunday 03:00 UTC: `PIPELINE_SCHEDULE_CRON=0 3 * * 0`
-- Failure notifications are sent by email (with traceback) via SMTP STARTTLS.
