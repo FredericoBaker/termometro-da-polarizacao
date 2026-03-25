@@ -16,22 +16,22 @@ class BackboneMetrics:
     degrees are computed within each sign subgraph, the disparity test is applied
     separately, and the surviving edges are combined before evaluating the
     largest connected component ratio.
+
+    Alpha selection scans a predefined list from smallest to largest and picks
+    the first value whose backbone keeps >= target_lcc_ratio of nodes in the
+    largest connected component.
     """
+
+    DEFAULT_ALPHA_VALUES = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
 
     def __init__(
         self,
         target_lcc_ratio: float = 0.8,
-        alpha_min: float = 1e-6,
-        alpha_max: float = 1.0,
-        alpha_tolerance: float = 1e-3,
-        max_alpha_iterations: int = 25,
+        alpha_values: List[float] | None = None,
     ):
         self.edge_repo = EdgeRepository()
         self.target_lcc_ratio = target_lcc_ratio
-        self.alpha_min = alpha_min
-        self.alpha_max = alpha_max
-        self.alpha_tolerance = alpha_tolerance
-        self.max_alpha_iterations = max_alpha_iterations
+        self.alpha_values = alpha_values or self.DEFAULT_ALPHA_VALUES
         self.p_values_batch_size = 5000
 
     def compute_graph_backbone(self, graph_id: int) -> Dict[str, Any]:
@@ -117,50 +117,30 @@ class BackboneMetrics:
         pos_degrees: Dict[int, int],
         neg_degrees: Dict[int, int],
     ) -> Tuple[float, List[Tuple[int, int]], float]:
-        low = self.alpha_min
-        high = self.alpha_max
-        best_alpha = self.alpha_max
-        best_pairs = self._select_combined_backbone_pairs(
-            pos_edges, neg_edges, pos_degrees, neg_degrees, self.alpha_max,
-        )
-        best_ratio = self._largest_component_ratio(node_ids, best_pairs)
-        found_feasible = best_ratio >= self.target_lcc_ratio
-
-        for _ in range(self.max_alpha_iterations):
-            mid = (low + high) / 2.0
+        for alpha in self.alpha_values:
             candidate_pairs = self._select_combined_backbone_pairs(
-                pos_edges,
-                neg_edges,
-                pos_degrees,
-                neg_degrees,
-                mid,
+                pos_edges, neg_edges, pos_degrees, neg_degrees, alpha,
             )
             candidate_ratio = self._largest_component_ratio(node_ids, candidate_pairs)
 
             if candidate_ratio >= self.target_lcc_ratio:
-                found_feasible = True
-                best_alpha = mid
-                best_pairs = candidate_pairs
-                best_ratio = candidate_ratio
-                high = mid
-            else:
-                low = mid
+                return alpha, candidate_pairs, candidate_ratio
 
-            if high - low < self.alpha_tolerance:
-                break
+        logger.warning(
+            "Could not satisfy target LCC ratio with any predefined alpha; "
+            "returning result for largest alpha tested",
+            extra={
+                "target_lcc_ratio": self.target_lcc_ratio,
+                "alpha_values": self.alpha_values,
+            },
+        )
 
-        if not found_feasible:
-            logger.warning(
-                "Could not satisfy target LCC ratio within alpha bounds; using alpha_max result",
-                extra={
-                    "target_lcc_ratio": self.target_lcc_ratio,
-                    "alpha_min": self.alpha_min,
-                    "alpha_max": self.alpha_max,
-                    "achieved_lcc_ratio": best_ratio,
-                },
-            )
-
-        return best_alpha, best_pairs, best_ratio
+        last_alpha = self.alpha_values[-1]
+        last_pairs = self._select_combined_backbone_pairs(
+            pos_edges, neg_edges, pos_degrees, neg_degrees, last_alpha,
+        )
+        last_ratio = self._largest_component_ratio(node_ids, last_pairs)
+        return last_alpha, last_pairs, last_ratio
 
     def _select_combined_backbone_pairs(
         self,
@@ -207,7 +187,7 @@ class BackboneMetrics:
     @staticmethod
     def _passes_disparity(p_ij: float, node_degree: int, alpha: float) -> bool:
         if node_degree <= 1:
-            return True
+            return False
         threshold = 1.0 - (alpha ** (1.0 / (node_degree - 1)))
         return p_ij > threshold
 

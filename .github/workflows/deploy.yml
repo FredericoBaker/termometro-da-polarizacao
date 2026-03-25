@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Deploy
 
 on:
   push:
@@ -7,11 +7,11 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to DigitalOcean
+    name: Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: Deploy
         uses: appleboy/ssh-action@v1
         env:
           PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
