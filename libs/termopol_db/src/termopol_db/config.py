@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 
 
 def load_env():
-    root_dir = Path(__file__).parent.parent.parent.parent
-    env_file = root_dir / ".env"
-    if env_file.exists():
-        load_dotenv(env_file)
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        env_file = parent / ".env"
+        if env_file.exists():
+            load_dotenv(env_file)
+            return
 
 
 def get_db_config() -> Dict[str, Any]:
