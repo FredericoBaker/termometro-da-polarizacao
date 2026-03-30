@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Github } from 'lucide-react'
 import { HomeLastUpdate } from '@/components/home/HomeLastUpdate'
 import { MetricsCard } from '@/components/dashboard/MetricsCard'
 
@@ -56,7 +56,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <HomeLastUpdate />
                 <a
                   href="https://sol.sbc.org.br/index.php/webmedia/article/view/37984"
@@ -65,6 +65,15 @@ export default function HomePage() {
                   className="text-sm text-brand-700 underline decoration-brand-200 underline-offset-4 transition-colors hover:text-brand-900"
                 >
                   Ler o artigo científico
+                </a>
+                <a
+                  href="https://github.com/FredericoBaker/termometro-da-polarizacao"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-900"
+                >
+                  <Github className="h-4 w-4" />
+                  GitHub
                 </a>
               </div>
             </div>
@@ -218,28 +227,42 @@ export default function HomePage() {
       {/* ── METODOLOGIA ── */}
       <section id="metodologia" className="border-t border-gray-300 bg-canvas">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-          <p className="text-sm leading-relaxed text-gray-600">
-            Dados coletados da{' '}
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="space-y-2">
+              <p className="text-sm leading-relaxed text-gray-600">
+                Dados coletados da{' '}
+                <a
+                  href="https://dadosabertos.camara.leg.br/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline decoration-gray-300 underline-offset-4 transition-colors hover:text-gray-900"
+                >
+                  API de Dados Abertos da Câmara dos Deputados
+                </a>
+                .
+              </p>
+              <p className="text-sm text-gray-700">
+                <a
+                  href="https://sol.sbc.org.br/index.php/webmedia/article/view/37984"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-800 underline decoration-brand-100 underline-offset-4 transition-colors hover:text-brand-900"
+                >
+                  Ler o artigo científico completo
+                </a>
+              </p>
+            </div>
+
             <a
-              href="https://dadosabertos.camara.leg.br/"
+              href="https://github.com/FredericoBaker/termometro-da-polarizacao"
               target="_blank"
               rel="noreferrer"
-              className="underline decoration-gray-300 underline-offset-4 transition-colors hover:text-gray-900"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900"
             >
-              API de Dados Abertos da Câmara dos Deputados
+              <Github className="h-4 w-4" />
+              Ver código no GitHub
             </a>
-            .
-          </p>
-          <p className="mt-2 text-sm text-gray-700">
-            <a
-              href="https://sol.sbc.org.br/index.php/webmedia/article/view/37984"
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-brand-800 underline decoration-brand-100 underline-offset-4 transition-colors hover:text-brand-900"
-            >
-              Ler o artigo científico completo
-            </a>
-          </p>
+          </div>
         </div>
       </section>
     </main>
