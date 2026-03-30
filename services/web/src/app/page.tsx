@@ -33,10 +33,10 @@ export default function HomePage() {
               <p className="max-w-2xl text-lg leading-relaxed text-gray-700">
                 Os votos registrados nas{' '}
                 <strong>votações nominais da Câmara dos Deputados</strong> são a
-                matéria-prima desta análise. A concordância ou discordância
+                base desta análise. A concordância ou discordância
                 acumulada entre cada par de parlamentares, ao longo de centenas
                 de votações, revela como alianças e oposições se estruturam de
-                fato — independentemente de filiação partidária ou discurso
+                fato, independentemente de filiação partidária ou de discurso
                 público.
               </p>
 
@@ -95,8 +95,8 @@ export default function HomePage() {
             </p>
             <p>
               O resultado é uma <strong>rede</strong> em que cada deputado é um
-              nó e cada conexão carrega o sinal desse alinhamento — positivo
-              para quem tende a votar junto, negativo para quem sistematicamente
+              nó e cada conexão carrega o sinal desse alinhamento, positivo
+              para quem tende a votar junto e negativo para quem sistematicamente
               se opõe. É sobre essa rede que o índice de polarização é
               calculado.
             </p>
@@ -154,7 +154,7 @@ export default function HomePage() {
           <div className="mt-4 max-w-3xl space-y-4 text-base leading-relaxed text-gray-700">
             <p>
               O índice é calculado a partir dos{' '}
-              <strong>triângulos de relacionamentos</strong> da rede — qualquer
+              <strong>triângulos de relacionamentos</strong> da rede: qualquer
               trio de deputados em que todos estejam conectados entre si. A
               combinação dos sinais positivos e negativos nas três conexões de
               cada triângulo indica se a estrutura é estável ou instável.
