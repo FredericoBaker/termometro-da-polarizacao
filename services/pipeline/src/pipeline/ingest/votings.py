@@ -150,14 +150,10 @@ class VotingsIngestor(BaseIngestor):
                 'voting_datetime': rollcall.get('dataRegistroVoto'),
                 'vote': vote,
                 'deputy_id': deputy_info.get('id'),
-                'deputy_uri': deputy_info.get('uri'),
                 'deputy_name': deputy_info.get('nome'),
                 'deputy_party_code': deputy_info.get('siglaPartido'),
-                'deputy_party_uri': deputy_info.get('uriPartido'),
                 'deputy_state_code': deputy_info.get('siglaUf'),
                 'deputy_legislature_id': deputy_info.get('idLegislatura'),
-                'deputy_photo_url': deputy_info.get('urlFoto'),
-                'payload': rollcall,
             })
             
             logger.debug(

@@ -357,13 +357,12 @@ class RawRollcallRepository(BaseRepository):
     def upsert_rollcall(self, rollcall_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Insert or update a rollcall in raw_rollcalls table.
-        
+
         Args:
-            rollcall_data: Dictionary with keys: voting_id, voting_uri, voting_datetime,
-                          vote, deputy_id, deputy_uri, deputy_name, deputy_party_code,
-                          deputy_party_uri, deputy_state_code, deputy_legislature_id,
-                          deputy_photo_url, payload
-                          
+            rollcall_data: Dictionary with keys: voting_id, voting_datetime,
+                          vote, deputy_id, deputy_name, deputy_party_code,
+                          deputy_state_code, deputy_legislature_id
+
         Returns:
             The inserted/updated rollcall record
         """
@@ -373,14 +372,10 @@ class RawRollcallRepository(BaseRepository):
             rollcall_data['voting_datetime'],
             rollcall_data['vote'],
             rollcall_data['deputy_id'],
-            rollcall_data['deputy_uri'],
             rollcall_data['deputy_name'],
             rollcall_data['deputy_party_code'],
-            rollcall_data['deputy_party_uri'],
             rollcall_data['deputy_state_code'],
             rollcall_data['deputy_legislature_id'],
-            rollcall_data.get('deputy_photo_url'),
-            self._serialize_json(rollcall_data.get('payload', {}))
         )
         logger.debug(
             "Upserting raw rollcall",
