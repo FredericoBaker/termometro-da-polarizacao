@@ -89,8 +89,11 @@ export function DeputyHeader({
             {legislatures.length} legislaturas registradas
           </span>
           {typeof focalPagerank === 'number' && selectedPeriodLabel && (
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-900">
-              PageRank {focalPagerank.toFixed(5)} em {selectedPeriodLabel}
+            <span
+              title="Centralidade na rede (PageRank): mede o quanto este deputado vota de forma parecida com outros deputados influentes. Valores maiores indicam maior presença nos blocos dominantes."
+              className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-900 cursor-help"
+            >
+              Centralidade na rede: {focalPagerank.toFixed(4)} em {selectedPeriodLabel}
             </span>
           )}
         </div>

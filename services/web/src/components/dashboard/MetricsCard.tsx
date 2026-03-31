@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import { clsx } from 'clsx'
 
 import { useAvailableGraphs } from '@/hooks/useAvailableGraphs'
@@ -32,7 +32,6 @@ function PolarizationGauge({ value }: { value: number }) {
   const maxScale = 133.3
   const clamped = Math.max(0, Math.min(value, maxScale))
   const progress = (clamped / maxScale) * 100
-  const thresholdAt100 = (100 / maxScale) * 100
   const dashoffset = mounted ? 100 - progress : 100
 
   return (
@@ -82,27 +81,6 @@ function PolarizationGauge({ value }: { value: number }) {
 
         <text
           x="100"
-          y="14"
-          textAnchor="middle"
-          fill="#6b7280"
-          fontSize="10"
-          fontFamily="inherit"
-        >
-          referência 100°
-        </text>
-        <text
-          x={15 + (170 * thresholdAt100) / 100}
-          y="108"
-          textAnchor="middle"
-          fill="#9ca3af"
-          fontSize="10"
-          fontFamily="inherit"
-        >
-          |
-        </text>
-
-        <text
-          x="100"
           y="82"
           textAnchor="middle"
           fill="#111827"
@@ -130,13 +108,20 @@ function PolarizationGauge({ value }: { value: number }) {
 
 // ─── Stat ─────────────────────────────────────────────────────────────────────
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5 text-center px-2">
       <span className="text-base font-semibold tabular-nums text-gray-900">
         {value}
       </span>
-      <span className="text-[11px] text-gray-500">{label}</span>
+      <span className="text-[11px] text-gray-500 inline-flex items-center gap-0.5">
+        {label}
+        {hint && (
+          <span title={hint} className="cursor-help text-gray-400">
+            <Info className="h-3 w-3 inline" />
+          </span>
+        )}
+      </span>
     </div>
   )
 }
@@ -275,6 +260,14 @@ export function MetricsCard() {
 
           <PolarizationGauge value={current.metrics.polarization_index} />
 
+          <p className="text-xs text-center text-gray-500 mt-1 px-4">
+            {current.metrics.polarization_index < 80
+              ? 'Nível relativamente baixo de polarização neste período. Quanto maior o índice, mais dividida em blocos opostos está a Câmara.'
+              : current.metrics.polarization_index < 100
+              ? 'Polarização moderada. Quanto maior o índice, mais dividida em blocos opostos está a Câmara.'
+              : 'Polarização elevada. O índice pode ultrapassar 100° — quanto maior, mais a Câmara está dividida em blocos opostos.'}
+          </p>
+
           <div className="mt-2 flex justify-center">
             <VariationBadge
               pct={variation?.delta_polarization_index_pct ?? null}
@@ -287,10 +280,12 @@ export function MetricsCard() {
             <Stat
               label="votações nominais"
               value={formatNumber(current.metrics.voting_count)}
+              hint="Votações nominais são aquelas em que o voto de cada deputado é registrado individualmente — a única forma de medir alinhamento real entre parlamentares."
             />
             <Stat
               label="deputados na rede"
               value={formatNumber(current.metrics.node_count ?? 0)}
+              hint="Número de deputados incluídos na análise para este período. Apenas parlamentares com votos suficientes para formar conexões são considerados."
             />
           </div>
         </>

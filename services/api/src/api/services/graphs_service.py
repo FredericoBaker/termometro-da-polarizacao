@@ -120,7 +120,10 @@ class GraphsService:
 
             graph_id = graph["id"]
 
-            backbone_edges = self.edge_repo.get_backbone_edges_by_graph(graph_id)
+            all_backbone_edges = self.edge_repo.get_backbone_edges_by_graph(graph_id)
+            # Main graph shows only positive (agreement) edges; negative edges are
+            # preserved for the deputy subgraph view.
+            backbone_edges = [e for e in all_backbone_edges if (e.get("w_signed") or 0) > 0]
             node_positions = self.graph_repo.get_nodes(graph_id)
             position_map = {row["deputy_id"]: row for row in node_positions}
 

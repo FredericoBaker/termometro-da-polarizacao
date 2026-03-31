@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { PageContainer } from '@/components/layout/PageContainer'
 import { MetricsCard } from '@/components/dashboard/MetricsCard'
@@ -22,6 +23,11 @@ export default function DashboardPage() {
     <PageContainer>
       <div className="flex flex-col gap-6">
         <MetricsCard />
+        <p className="text-xs text-gray-400 text-right -mt-3 pr-1">
+          <Link href="/#metodologia" className="hover:text-gray-600 transition-colors">
+            Como este índice é calculado? →
+          </Link>
+        </p>
         <PolarizationTimeseries />
         <GraphTeaser />
         <RankingsSection />

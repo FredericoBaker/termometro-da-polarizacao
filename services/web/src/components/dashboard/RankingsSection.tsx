@@ -74,7 +74,10 @@ function RankingRow({ edge, maxAbsW, type }: RankingRowProps) {
             style={{ width: `${barWidth}%` }}
           />
         </div>
-        <span className="text-xs text-gray-500 tabular-nums w-16 text-right">
+        <span
+          title="Peso acumulado: diferença entre o número de votos iguais e votos opostos entre este par."
+          className="text-xs text-gray-500 tabular-nums w-16 text-right cursor-help"
+        >
           {formatNumber(edge.abs_w)}
         </span>
       </div>
@@ -128,13 +131,19 @@ function RankingsColumn({ title, edges, type, isLoading }: RankingsColumnProps) 
       ? 'text-green-700 border-green-200 bg-green-50'
       : 'text-red-700 border-red-200 bg-red-50'
 
+  const subtitle =
+    type === 'agreement' ? 'Pares que mais votaram juntos' : 'Pares que mais se opuseram'
+
   return (
     <div className="flex flex-col gap-0">
       <h3
-        className={`text-sm font-semibold px-3 py-2 rounded-t-lg border ${accentClass}`}
+        className={`text-sm font-semibold px-3 pt-2 pb-1 rounded-t-lg border-t border-x ${accentClass}`}
       >
         {title}
       </h3>
+      <p className={`text-xs px-3 py-1 border-x ${accentClass}`}>
+        {subtitle}
+      </p>
       <div className="border border-t-0 border-gray-200 rounded-b-lg px-3 min-h-[200px]">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -182,10 +191,15 @@ export function RankingsSection() {
 
   return (
     <section>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 className="text-base font-semibold text-gray-900">
-          Maiores Concordâncias e Discordâncias
-        </h2>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">
+            Maiores Concordâncias e Discordâncias
+          </h2>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Os pares de deputados com maior concordância e maior discordância acumulada nos votos.
+          </p>
+        </div>
         {available && !loadingAvailable && (
           <PeriodSelector
             available={available}

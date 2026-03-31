@@ -83,6 +83,9 @@ export function GraphTeaser() {
                 ? `${graph.order} deputados · ${graph.size} conexões`
                 : 'Carregando...'}
             </p>
+            <p className="mt-1 text-xs text-gray-400">
+              Cada ponto é um deputado. Linhas verdes conectam deputados que votam juntos com frequência.
+            </p>
           </div>
           <Link
             href="/grafo"

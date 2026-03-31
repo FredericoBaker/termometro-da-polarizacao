@@ -95,10 +95,15 @@ export function DeputyPageClient({ id }: { id: number }) {
 
         {/* Subgraph + period selector */}
         <section>
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <h2 className="text-base font-semibold text-gray-900">
-              Rede de Votação
-            </h2>
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                Rede de Votação
+              </h2>
+              <p className="mt-0.5 text-xs text-gray-400">
+                Deputados próximos tendem a votar juntos. Linhas verdes = concordância, vermelhas = discordância.
+              </p>
+            </div>
             {available && (
               <PeriodSelector
                 available={available}
@@ -146,9 +151,12 @@ export function DeputyPageClient({ id }: { id: number }) {
         {/* Rankings from subgraph edges — zero extra API calls */}
         {subgraphData && focalKey && (
           <section>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
               Rankings de Votação
             </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Com quem este deputado mais votou em conjunto e contra quem mais se opôs.
+            </p>
             <DeputyRankings graph={subgraphData.graph} focalKey={focalKey} />
           </section>
         )}

@@ -355,6 +355,11 @@ function EdgePanel({ attrs, sourceAttrs, targetAttrs, onClose }: EdgePanelProps)
         <p className="text-lg font-semibold tabular-nums text-gray-900">
           {formatNumber(attrs.absW)}
         </p>
+        <p className="mt-1 text-xs text-gray-400">
+          {isAgreement
+            ? 'Diferença acumulada de votos a favor da concordância entre esses dois parlamentares.'
+            : 'Diferença acumulada de votos a favor da discordância entre esses dois parlamentares.'}
+        </p>
       </div>
     </aside>
   )
@@ -479,14 +484,18 @@ export default function GraphViewerClient({ graph }: { graph: Graph }) {
 
       {hoveredEdge && hoveredEdgeAttrs && (
         <div
-          className="pointer-events-none absolute z-20 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-xs text-gray-700 shadow-sm"
+          className="pointer-events-none absolute z-20 rounded-md border border-gray-200 bg-white/95 px-2 py-1.5 text-xs text-gray-700 shadow-sm"
           style={{
             left: hoveredEdge.x + 10,
             top: hoveredEdge.y + 10,
           }}
         >
-          Peso: {hoveredEdgeAttrs.wSigned > 0 ? '+' : ''}
-          {hoveredEdgeAttrs.wSigned}
+          <p className={`font-medium ${hoveredEdgeAttrs.wSigned >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+            {hoveredEdgeAttrs.wSigned >= 0 ? 'Concordância' : 'Discordância'}
+          </p>
+          <p className="text-gray-600">
+            Peso: {hoveredEdgeAttrs.wSigned > 0 ? '+' : ''}{hoveredEdgeAttrs.wSigned}
+          </p>
         </div>
       )}
 

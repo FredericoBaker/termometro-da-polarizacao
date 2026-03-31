@@ -29,7 +29,7 @@ export function GrafoPageClient() {
     // h-[calc(100vh-3.5rem)] = full viewport minus the sticky header (h-14 = 3.5rem)
     <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden">
       {/* Controls bar */}
-      <div className="flex h-16 flex-none items-center border-b border-gray-200 bg-white px-4">
+      <div className="flex h-16 flex-none items-center justify-between border-b border-gray-200 bg-white px-4">
         {available ? (
           <div className="flex h-full items-center">
             <PeriodSelector
@@ -46,6 +46,9 @@ export function GrafoPageClient() {
         ) : (
           <div className="h-8" />
         )}
+        <p className="hidden lg:block text-xs text-gray-400 max-w-xs text-right">
+          Cada ponto é um deputado. Linhas verdes indicam concordância entre deputados. Deputados próximos tendem a votar juntos. Clique em qualquer elemento para ver detalhes.
+        </p>
       </div>
 
       {/* Graph area */}

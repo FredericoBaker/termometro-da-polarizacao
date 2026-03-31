@@ -24,9 +24,11 @@ class PageRankMetrics:
 
         graph = nx.Graph()
         for edge in backbone_edges:
+            if float(edge["w_signed"]) <= 0:
+                continue
             deputy_a = edge["deputy_a"]
             deputy_b = edge["deputy_b"]
-            w = abs(float(edge["w_signed"]))
+            w = float(edge["w_signed"])
             graph.add_node(deputy_a)
             graph.add_node(deputy_b)
             graph.add_edge(deputy_a, deputy_b, weight=w)

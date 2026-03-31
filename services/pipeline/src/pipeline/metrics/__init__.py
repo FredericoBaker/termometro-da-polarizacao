@@ -30,20 +30,18 @@ class MetricsRunner:
                 # 1. Backbone must run first
                 self.backbone_metrics.compute_graph_backbone(graph_id)
 
-                # 2. Polarization, Layout and PageRank can run in parallel
+                # 2. Layout must run before PageRank: upsert_node overwrites the pagerank
+                #    column with NULL, so running them in parallel causes a race condition
+                #    where the layout step silently clears the freshly-computed pagerank.
+                self.layout_metrics.compute_graph_layout(graph_id)
+                self.pagerank_metrics.compute_graph_pagerank(graph_id)
+
+                # 3. Polarization is independent and can run in parallel with the above,
+                #    but for simplicity we keep the whole sequence serial per graph.
                 future_polarization = executor.submit(
                     self.polarization_metrics.compute_graph_polarization, graph_id
                 )
-                future_layout = executor.submit(
-                    self.layout_metrics.compute_graph_layout, graph_id
-                )
-                future_pagerank = executor.submit(
-                    self.pagerank_metrics.compute_graph_pagerank, graph_id
-                )
-
                 future_polarization.result()
-                future_layout.result()
-                future_pagerank.result()
 
                 self.graph_repo.clear_graph_metrics_dirty(graph_id)
                 processed_graphs += 1

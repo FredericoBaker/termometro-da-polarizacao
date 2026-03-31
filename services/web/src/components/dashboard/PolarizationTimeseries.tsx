@@ -42,7 +42,7 @@ function ChartTooltip({ active, payload, label }: TooltipPayload) {
       <div className="mt-1.5 space-y-0.5 text-gray-500">
         <p>{formatNumber(point.votingCount)} votações</p>
         <p>{formatNumber(point.nodeCount)} deputados</p>
-        <p>{formatPercent(point.balancedRatio)} equilibradas</p>
+        <p>{formatPercent(point.balancedRatio)} de triângulos equilibrados</p>
       </div>
     </div>
   )
@@ -62,10 +62,16 @@ export function PolarizationTimeseries() {
 
   return (
     <div className="rounded-lg border border-gray-300 bg-white p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h2 className="text-base font-semibold text-gray-900">
-          Evolução do Grau de Polarização
-        </h2>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">
+            Evolução do Grau de Polarização
+          </h2>
+          <span className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="inline-block w-5 border-t border-dashed border-gray-400" />
+            O índice pode ultrapassar 100° — quanto maior, mais polarizada está a Câmara.
+          </span>
+        </div>
 
         <div className="flex rounded-lg border border-gray-300 bg-white p-0.5">
           {(Object.keys(GRANULARITY_LABELS) as Granularity[]).map((g) => (
