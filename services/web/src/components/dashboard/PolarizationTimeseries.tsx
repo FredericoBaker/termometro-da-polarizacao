@@ -9,7 +9,6 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  ReferenceLine,
 } from 'recharts'
 import { clsx } from 'clsx'
 
@@ -125,12 +124,6 @@ export function PolarizationTimeseries() {
             />
 
             <Tooltip content={<ChartTooltip />} />
-            <ReferenceLine
-              y={100}
-              stroke="#9ca3af"
-              strokeDasharray="4 4"
-            />
-
             <Line
               type="monotone"
               dataKey="value"
