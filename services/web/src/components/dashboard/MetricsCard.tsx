@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -102,6 +102,58 @@ function PolarizationGauge({ value }: { value: number }) {
           graus de polarização
         </text>
       </svg>
+    </div>
+  )
+}
+
+// ─── Polarization level info popover ─────────────────────────────────────────
+
+function polarizationLevel(value: number): { label: string; color: string } {
+  if (value < 25) return { label: 'Baixa', color: 'text-blue-600' }
+  if (value < 50) return { label: 'Moderada', color: 'text-yellow-600' }
+  if (value < 100) return { label: 'Alta', color: 'text-orange-600' }
+  return { label: 'Muito alta', color: 'text-red-600' }
+}
+
+function PolarizationInfoButton({ value }: { value: number }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const { label, color } = polarizationLevel(value)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative inline-flex items-center gap-1">
+      <span className={`text-xs font-medium ${color}`}>{label}</span>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-gray-400 hover:text-gray-600 transition-colors"
+        aria-label="Explicação dos níveis de polarização"
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-md text-left">
+          <p className="text-xs font-semibold text-gray-800 mb-2">Níveis de polarização</p>
+          <ul className="space-y-1 text-xs text-gray-600">
+            <li><span className="font-medium text-blue-600">Baixa</span> — abaixo de 25°</li>
+            <li><span className="font-medium text-yellow-600">Moderada</span> — entre 25° e 50°</li>
+            <li><span className="font-medium text-orange-600">Alta</span> — entre 50° e 100°</li>
+            <li><span className="font-medium text-red-600">Muito alta</span> — acima de 100°</li>
+          </ul>
+          <p className="mt-2 text-[11px] text-gray-400">Quanto maior o índice, mais a Câmara está dividida em blocos opostos.</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -260,13 +312,19 @@ export function MetricsCard() {
 
           <PolarizationGauge value={current.metrics.polarization_index} />
 
-          <p className="text-xs text-center text-gray-500 mt-1 px-4">
-            {current.metrics.polarization_index < 80
-              ? 'Nível relativamente baixo de polarização neste período. Quanto maior o índice, mais dividida em blocos opostos está a Câmara.'
-              : current.metrics.polarization_index < 100
-              ? 'Polarização moderada. Quanto maior o índice, mais dividida em blocos opostos está a Câmara.'
-              : 'Polarização elevada. O índice pode ultrapassar 100° — quanto maior, mais a Câmara está dividida em blocos opostos.'}
-          </p>
+          <div className="mt-1 flex flex-col items-center gap-1">
+            <PolarizationInfoButton value={current.metrics.polarization_index} />
+            {current.graph.updated_at && (
+              <p className="text-[11px] text-gray-400">
+                Atualizado em{' '}
+                {new Date(current.graph.updated_at).toLocaleDateString('pt-BR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </p>
+            )}
+          </div>
 
           <div className="mt-2 flex justify-center">
             <VariationBadge

@@ -84,7 +84,7 @@ export function GraphTeaser() {
                 : 'Carregando...'}
             </p>
             <p className="mt-1 text-xs text-gray-400">
-              Cada ponto é um deputado. Linhas verdes conectam deputados que votam juntos com frequência.
+              Clique para ver o mapa completo de conexões entre deputados.
             </p>
           </div>
           <Link

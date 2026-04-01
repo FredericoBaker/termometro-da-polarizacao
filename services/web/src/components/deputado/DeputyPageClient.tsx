@@ -101,7 +101,7 @@ export function DeputyPageClient({ id }: { id: number }) {
                 Rede de Votação
               </h2>
               <p className="mt-0.5 text-xs text-gray-400">
-                Deputados próximos tendem a votar juntos. Linhas verdes = concordância, vermelhas = discordância.
+                Quanto mais próximos dois deputados, mais concordam entre si. Linhas verdes indicam concordância acumulada; vermelhas, discordância.
               </p>
             </div>
             {available && (
