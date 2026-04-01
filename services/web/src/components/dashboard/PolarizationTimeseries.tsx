@@ -129,11 +129,6 @@ export function PolarizationTimeseries() {
               y={100}
               stroke="#9ca3af"
               strokeDasharray="4 4"
-              label={{
-                value: 'limiar 100°',
-                fill: '#6b7280',
-                fontSize: 11,
-              }}
             />
 
             <Line
