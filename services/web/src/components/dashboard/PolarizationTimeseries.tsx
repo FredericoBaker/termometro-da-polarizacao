@@ -66,10 +66,9 @@ export function PolarizationTimeseries() {
           <h2 className="text-base font-semibold text-gray-900">
             Evolução do Grau de Polarização
           </h2>
-          <span className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
-            <span className="inline-block w-5 border-t border-dashed border-gray-400" />
-            O índice pode ultrapassar 100° e quanto maior, mais polarizada está a Câmara no período selecionado.
-          </span>
+          <p className="mt-1 text-xs text-gray-500">
+            O índice pode ultrapassar 100° e, quanto maior, mais polarizada está a Câmara no período selecionado.
+          </p>
         </div>
 
         <div className="flex rounded-lg border border-gray-300 bg-white p-0.5">

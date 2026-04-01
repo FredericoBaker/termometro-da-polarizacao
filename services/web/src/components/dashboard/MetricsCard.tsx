@@ -169,8 +169,11 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
       <span className="text-[11px] text-gray-500 inline-flex items-center gap-0.5">
         {label}
         {hint && (
-          <span title={hint} className="cursor-help text-gray-400">
+          <span className="relative group text-gray-400 cursor-help">
             <Info className="h-3 w-3 inline" />
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-56 rounded-lg border border-gray-200 bg-white p-2.5 shadow-md text-left text-[11px] text-gray-600 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity">
+              {hint}
+            </span>
           </span>
         )}
       </span>
