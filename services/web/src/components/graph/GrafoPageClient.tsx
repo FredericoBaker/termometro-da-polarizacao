@@ -46,19 +46,17 @@ export function GrafoPageClient() {
         ) : (
           <div className="h-8" />
         )}
-        <div className="hidden lg:flex items-center gap-3 text-[11px] text-gray-400">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-gray-400 inline-block" />
-            ponto = deputado
+        <div className="hidden lg:flex items-center gap-4 text-[11px] text-gray-400">
+          <span>Cada ponto é um deputado</span>
+          <span className="text-gray-200">|</span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-px w-5 bg-green-500 inline-block flex-none" />
+            linha verde = concordância acumulada de votos
           </span>
-          <span className="flex items-center gap-1">
-            <span className="h-px w-4 bg-green-500 inline-block" />
-            concordância
-          </span>
-          <span className="text-gray-300">·</span>
-          <span>proximidade = afinidade de voto</span>
-          <span className="text-gray-300">·</span>
-          <span>clique para detalhes</span>
+          <span className="text-gray-200">|</span>
+          <span>quanto mais próximos, mais votam igual</span>
+          <span className="text-gray-200">|</span>
+          <span>clique em um deputado para ver o perfil</span>
         </div>
       </div>
 

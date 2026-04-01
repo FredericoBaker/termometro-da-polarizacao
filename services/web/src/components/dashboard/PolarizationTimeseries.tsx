@@ -16,7 +16,7 @@ import { clsx } from 'clsx'
 import type { Granularity } from '@/types/api'
 import type { TimeseriesPoint } from '@/hooks/useTimeseries'
 import { useTimeseries } from '@/hooks/useTimeseries'
-import { formatPolarizationDegrees, formatNumber, formatPercent } from '@/lib/utils'
+import { formatPolarizationDegrees, formatNumber } from '@/lib/utils'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 
@@ -42,7 +42,6 @@ function ChartTooltip({ active, payload, label }: TooltipPayload) {
       <div className="mt-1.5 space-y-0.5 text-gray-500">
         <p>{formatNumber(point.votingCount)} votações</p>
         <p>{formatNumber(point.nodeCount)} deputados</p>
-        <p>{formatPercent(point.balancedRatio)} de triângulos equilibrados</p>
       </div>
     </div>
   )

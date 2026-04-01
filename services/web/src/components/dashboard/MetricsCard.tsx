@@ -151,7 +151,7 @@ function PolarizationInfoButton({ value }: { value: number }) {
             <li><span className="font-medium text-orange-600">Alta</span> — entre 50° e 100°</li>
             <li><span className="font-medium text-red-600">Muito alta</span> — acima de 100°</li>
           </ul>
-          <p className="mt-2 text-[11px] text-gray-400">Quanto maior o índice, mais a Câmara está dividida em blocos opostos.</p>
+          <p className="mt-2 text-[11px] text-gray-400">Quanto maior o índice, mais a Câmara está dividida.</p>
         </div>
       )}
     </div>
@@ -312,18 +312,8 @@ export function MetricsCard() {
 
           <PolarizationGauge value={current.metrics.polarization_index} />
 
-          <div className="mt-1 flex flex-col items-center gap-1">
+          <div className="mt-1 flex items-center justify-center">
             <PolarizationInfoButton value={current.metrics.polarization_index} />
-            {current.graph.updated_at && (
-              <p className="text-[11px] text-gray-400">
-                Atualizado em{' '}
-                {new Date(current.graph.updated_at).toLocaleDateString('pt-BR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </p>
-            )}
           </div>
 
           <div className="mt-2 flex justify-center">
@@ -338,12 +328,12 @@ export function MetricsCard() {
             <Stat
               label="votações nominais"
               value={formatNumber(current.metrics.voting_count)}
-              hint="Votações nominais são aquelas em que o voto de cada deputado é registrado individualmente — a única forma de medir alinhamento real entre parlamentares."
+              hint="Votações nominais são aquelas em que o voto de cada deputado é registrado individualmente. Este é o total de votações nominais ocorridas no período e consideradas nesta análise."
             />
             <Stat
               label="deputados na rede"
               value={formatNumber(current.metrics.node_count ?? 0)}
-              hint="Número de deputados incluídos na análise para este período. Apenas parlamentares com votos suficientes para formar conexões são considerados."
+              hint="Deputados que participaram de ao menos uma votação nominal no período. O número pode ultrapassar 513, pois deputados suplentes também são contabilizados se participarem de uma votação nominal no período."
             />
           </div>
         </>
