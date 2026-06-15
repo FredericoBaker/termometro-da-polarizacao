@@ -16,6 +16,7 @@ _REPO_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "services/pipeline/src"))
 sys.path.insert(0, str(_REPO_ROOT / "libs/termopol_db/src"))
 
+from pipeline.cache_warm import is_enabled as cache_warm_enabled, warm_cache
 from pipeline.graph.build import BuildGraph
 from pipeline.ingest import DeputiesIngestor, PartiesIngestor, VotingsIngestor
 from pipeline.metrics import MetricsRunner
@@ -325,6 +326,16 @@ def main() -> None:
             extra={"log_id": log_id},
         )
         sys.exit(1)
+
+    # Best-effort cache warming. Runs only after a successful run (the except
+    # branch above exits) and never affects the pipeline's recorded status.
+    if cache_warm_enabled():
+        try:
+            run_step("warm-cache", warm_cache)
+        except Exception:
+            logger.exception("Cache warming failed; ignoring (non-fatal)")
+    else:
+        logger.info("Cache warming disabled; skipping")
 
 
 if __name__ == "__main__":

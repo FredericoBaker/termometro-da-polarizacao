@@ -20,7 +20,6 @@ services:
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
-    # Renews certificates automatically every 12 hours
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     restart: unless-stopped
 
@@ -120,6 +119,8 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       PIPELINE_NOTIFY_EMAIL_TO: ${PIPELINE_NOTIFY_EMAIL_TO:-fredericodsbaker@gmail.com}
       PIPELINE_SCHEDULE_CRON: ${PIPELINE_SCHEDULE_CRON:-0 3 * * *}
+      CACHE_WARM_ENABLED: ${CACHE_WARM_ENABLED:-true}
+      CACHE_WARM_API_BASE: ${CACHE_WARM_API_BASE:-http://api:8000}
     depends_on:
       db:
         condition: service_healthy
