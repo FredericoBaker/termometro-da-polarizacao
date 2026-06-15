@@ -26,6 +26,14 @@ class HealthService:
         log = repo.get_last_completed()
         if not log:
             return {"last_updated_at": None}
+        # Use updated_at (when the run was marked completed) — the real
+        # wall-clock finish time. end_logic_ts is the logical window boundary,
+        # which is always the scheduled trigger instant (03:00 UTC) and thus
+        # would render as a constant midnight in Brasília time.
         return {
-            "last_updated_at": log.get("end_logic_ts") or log.get("created_at"),
+            "last_updated_at": (
+                log.get("updated_at")
+                or log.get("end_logic_ts")
+                or log.get("created_at")
+            ),
         }
