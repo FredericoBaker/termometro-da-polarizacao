@@ -10,17 +10,57 @@ export const metadata: Metadata = {
   },
   description:
     'Medição da polarização política na Câmara dos Deputados a partir dos padrões de votação nominal dos parlamentares.',
+  alternates: {
+    canonical: 'https://termometrodapolarizacao.com.br',
+  },
   openGraph: {
     title: 'Termômetro da Polarização',
     description:
       'A polarização na Câmara dos Deputados medida pelos votos, não pelo discurso.',
+    url: 'https://termometrodapolarizacao.com.br',
     type: 'website',
   },
+}
+
+const datasetSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: 'Índice de Polarização da Câmara dos Deputados do Brasil',
+  description:
+    'Série histórica do índice de polarização política calculado a partir das votações nominais da Câmara dos Deputados do Brasil, desde 2003. Baseado em teoria de balanço estrutural de redes com sinal.',
+  url: 'https://termometrodapolarizacao.com.br',
+  inLanguage: 'pt-BR',
+  temporalCoverage: '2003/..',
+  spatialCoverage: 'Brasil',
+  creator: {
+    '@type': 'Person',
+    name: 'Frederico Baker',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Termômetro da Polarização',
+    url: 'https://termometrodapolarizacao.com.br',
+  },
+  license: 'https://creativecommons.org/licenses/by/4.0/',
+  isBasedOn: 'https://sol.sbc.org.br/index.php/webmedia/article/view/37984',
+  keywords: [
+    'polarização política',
+    'câmara dos deputados',
+    'votação nominal',
+    'teoria de balanço',
+    'ciência política computacional',
+    'dados abertos',
+    'legislativo brasileiro',
+  ],
 }
 
 export default function HomePage() {
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetSchema) }}
+      />
       {/* ── HERO ── */}
       <section className="relative border-b border-gray-300 bg-canvas">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">

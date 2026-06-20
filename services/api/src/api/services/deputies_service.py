@@ -26,6 +26,22 @@ class DeputiesService:
             return None
         return month_value.strftime("%m-%Y")
 
+    def list_deputies(self) -> list[dict]:
+        cache_key = self.cache.make_key("deputies:list_deputies:v1")
+
+        def _build() -> list[dict]:
+            rows = self.deputy_repo.get_all_deputies()
+            return [
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "state_code": row["state_code"],
+                }
+                for row in rows
+            ]
+
+        return self.cache.get_or_set(cache_key, _build)
+
     def get_deputy(self, deputy_id: int) -> dict:
         def _build() -> dict:
             deputy = self.deputy_repo.get_deputy_by_id(deputy_id)

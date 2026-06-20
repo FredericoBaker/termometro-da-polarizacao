@@ -11,10 +11,14 @@ export const metadata: Metadata = {
   title: 'Painel',
   description:
     'Métricas de polarização legislativa, evolução histórica e rankings de acordos e desacordos entre deputados.',
+  alternates: {
+    canonical: 'https://termometrodapolarizacao.com.br/dashboard',
+  },
   openGraph: {
     title: 'Painel | Termômetro da Polarização',
     description:
       'Métricas de polarização legislativa, evolução histórica e rankings de acordos e desacordos entre deputados.',
+    url: 'https://termometrodapolarizacao.com.br/dashboard',
   },
 }
 

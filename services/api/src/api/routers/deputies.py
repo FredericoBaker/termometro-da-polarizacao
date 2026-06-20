@@ -5,6 +5,12 @@ from api.services import DeputiesService
 
 router = APIRouter(prefix="/v1/deputies", tags=["Deputies"])
 
+@router.get("/")
+def list_deputies(
+    deputies_service: DeputiesService = Depends(get_deputies_service),
+):
+    return deputies_service.list_deputies()
+
 @router.get("/search")
 def search_deputies(
     q: str,
