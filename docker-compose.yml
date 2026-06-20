@@ -20,7 +20,9 @@ services:
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+      - ./ops/certbot/reload-nginx.py:/opt/reload-nginx.py:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --deploy-hook \"python3 /opt/reload-nginx.py\"; sleep 12h & wait $${!}; done;'"
     restart: unless-stopped
 
   redis:
